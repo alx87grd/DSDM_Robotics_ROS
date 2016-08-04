@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 import numpy as np
-from dsdm_msgs.msg import joint_position
+from master.msg import joint_position
 from sensor_msgs.msg import Joy
 
 #########################################
@@ -16,10 +16,10 @@ class nav(object):
         self.pub_q_goal   = rospy.Publisher("q_goal", joint_position , queue_size=1      )
         
         # Timer
-        self.pub_timer    = rospy.Timer( rospy.Duration.from_sec(15.0),    self.callback  )
+        #self.pub_timer    = rospy.Timer( rospy.Duration.from_sec(15.0),    self.callback  )
         
         # Joystick
-        #self.sub_joy   = rospy.Subscriber("joy", Joy , self.callback , queue_size=1      )
+        self.sub_joy   = rospy.Subscriber("joy", Joy , self.callback , queue_size=1      )
         
         self.n_DOF   = 2 ;
         self.q_max   = np.array([ 4, 4])
@@ -32,9 +32,9 @@ class nav(object):
         """ Publish a random goal """
         
         # Generate a random goal
-        q_goal = self.random_goal()
+        #q_goal = self.random_goal()
         
-        """
+        
         if msg.buttons[0] == 1 :
                 
             q_goal   = np.array([ 1, 1])
@@ -45,10 +45,16 @@ class nav(object):
         elif msg.buttons[1] == 1 :
                 
             q_goal   = np.array([ -1, -1])
-        """
             
-        # Publish the goal
-        self.q2msg( q_goal )
+            # Publish the goal
+            self.q2msg( q_goal )
+            
+        else:
+            
+            q_goal   = np.array([ 0, 0])
+            
+            
+        
         
         
     #######################################   

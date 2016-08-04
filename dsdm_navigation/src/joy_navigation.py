@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 import numpy as np
-from master.msg import joint_position
+from dsdm_msgs.msg import joint_position
 from sensor_msgs.msg import Joy
 
 #########################################
