@@ -1,0 +1,5 @@
+<launch>
+	<group ns="a0">
+		<include file="$(find dsdm_actuator)/launch/actuator.launch"/>
+	</group>
+ </launch>
