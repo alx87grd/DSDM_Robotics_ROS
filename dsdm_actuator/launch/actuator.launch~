@@ -1,5 +1,5 @@
 <launch>
-	<node pkg="dsdm_actuator" type="DSDM_CTL.py" name="ctl" output="screen">
+	<node pkg="dsdm_actuator" type="dsdm_ctl.py" name="ctl" output="screen">
 	</node>
 
  	<group ns="M1">
