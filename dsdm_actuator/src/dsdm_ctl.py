@@ -16,18 +16,32 @@ class DSDM_CTL(object):
     send msg to two FlexSEA Driver Node
     """
     
+    #################################
     def __init__(self):
         
         self.verbose = False
         
+        # Message outgoing
         self.pub_cmd_m1     = rospy.Publisher("M1/u", inputs , queue_size=1      )
         self.pub_cmd_m2     = rospy.Publisher("M2/u", inputs , queue_size=1      )
         self.pub_y          = rospy.Publisher("y", dsdm_actuator_sensor_feedback , queue_size=1      )
         
+        # Messages Inputs        
         self.sub_u          = rospy.Subscriber("u", dsdm_actuator_control_inputs , self.setpoint_callback , queue_size=1 )
         self.sub_y_m1       = rospy.Subscriber("M1/y", outputs , self.feedback_callback_m1 , queue_size=1 )
         self.sub_y_m2       = rospy.Subscriber("M2/y", outputs , self.feedback_callback_m2 , queue_size=1 )
         
+        # Timers
+        self.param_timer    = rospy.Timer( rospy.Duration.from_sec(1.0),    self.load_params  )
+        
+        #########################
+        # Params
+        
+        self.load_params( None )
+
+        ##########################
+        # Variables initialization
+
         # Set point
         self.f = 0
         self.k = 1
@@ -37,22 +51,12 @@ class DSDM_CTL(object):
         self.w_raw = np.zeros(3)  # Velocity
         self.y     = np.zeros(3) # M1 = [1], M2 = [1]
         self.w     = np.zeros(3)  # Velocity
+        self.q     = 0
+        self.dq    = 0
         
         # Memory for speed filter
         self.y_past = np.zeros(3)  # t-1 value
-        self.w_x    = np.zeros(3)  # state of the filter
-        
-        self.dt = 0.02
-        RC      = 0
-        
-        self.alpha = self.dt / ( RC + self.dt )
-        print self.alpha
-        
-        
-        #Motor signs: TODO read from params
-        self.signs = [1,-1,1]
-        self.g      = np.array([  1 , 1./4./500. , 1./72./500. ])   # Gear ratios [output,M1,M2] (ticks to output units)
-        
+        self.w_x    = np.zeros(3)  # state of the filter        
         
         # Init flexsea input msg
         
@@ -67,6 +71,34 @@ class DSDM_CTL(object):
         self.setpoints      = [0,0]
         self.ctrl_modes     = [0,0]
         self.brake_state_M1 = 0
+        
+        # Time
+        self.t_last = rospy.get_rostime()
+        
+        
+        
+    ###########################################
+    def load_params(self, event):
+        """ Load param on ROS server """
+        
+        self.filter_rc     = rospy.get_param("filter_rc")
+        tpt                = rospy.get_param("ticks_per_turns")
+        out_corr           = rospy.get_param("output_units_corr")
+        r1                 = rospy.get_param("r1")
+        r2                 = rospy.get_param("r2")
+        rout               = rospy.get_param("rout")
+        m1_sign            = rospy.get_param("m1_sign")
+        m2_sign            = rospy.get_param("m2_sign")
+        out_sign           = rospy.get_param("out_sign")
+        
+        #Motor signs
+        self.signs = np.array( [ out_sign, m1_sign, m2_sign] )
+        
+        # Gear ratios [output,M1,M2] (ticks to output units)
+        self.corr  = np.array([ out_corr , ( 2. * np.pi ) / tpt  , ( 2. * np.pi ) / tpt ])
+        self.g     = np.array([  rout    , 1./r1  , 1./r2  ])  
+
+        
         
     ###########################################
     def controller( self ):
@@ -133,25 +165,36 @@ class DSDM_CTL(object):
     def decode_feedback( self ):
         """ """
         
+        # Time period
+        t      = rospy.get_rostime()
+        dt_ros = t - self.t_last
+        dt     = dt_ros.to_sec()
+        
+        # Update digital filter values
+        self.alpha = dt / ( self.filter_rc + dt )
+        
         # Compute filtered speed with raw large values
         self.w_raw       = self.y_raw - self.y_past                          # ticks per period
-        #print self.y_raw , self.y_past , self.w_raw
-        w                = ( self.w_raw + 0.0 ) / self.dt                    # ticks per seconds
-        w_filtered_ticks = self.alpha * w + ( 1 - self.alpha ) * self.w_x     # filter
+        w                = ( self.w_raw + 0.0 ) / dt                         # ticks per seconds
+        w_filtered_ticks = self.alpha * w + ( 1 - self.alpha ) * self.w_x    # filter
         
         
         # Kinematic
+        
         # Position 
-        self.y    = np.multiply( self.y_raw , self.g )          # for m1 & m2
-        self.y[0] = self.g[0] * ( self.y[1] + self.y[2] )  # output
+        self.y    = self.y_raw  * self.corr                         # for m1 & m2
+        self.y[0] = self.g[1] * self.y[1] + self.g[2] * self.y[2]   # output rev
+        self.q    = self.signs[0] * self.corr[0] * self.g[0] * self.y[0]
         # Speed [rad/sec] 
-        self.w    = np.multiply( w_filtered_ticks , self.g )    # M1 & M2
-        self.w[0] = self.g[0] * ( self.w[1] + self.w[2] )  # output
+        self.w    = w_filtered_ticks * self.corr                    # M1 & M2
+        self.w[0] = self.g[1] * self.w[1] + self.g[2] * self.w[2]   # output shaft
+        self.dq   = self.signs[0] * self.corr[0] * self.g[0] * self.w[0]
         
         
         #Memory
         self.w_x    = w_filtered_ticks
         self.y_past = self.y_raw.copy()
+        self.t_last = t
         
         
     ###########################################
@@ -194,8 +237,8 @@ class DSDM_CTL(object):
         msg_y.w     = self.w
         msg_y.y_raw = self.y_raw
         msg_y.w_raw = self.w_raw
-        
-        msg_y.test   = self.w[0]
+        msg_y.dq    = self.dq
+        msg_y.q     = self.q
         
         self.pub_y.publish( msg_y )
         
