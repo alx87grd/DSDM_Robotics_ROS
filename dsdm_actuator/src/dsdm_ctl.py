@@ -33,24 +33,25 @@ class DSDM_CTL(object):
         self.k = 1
         
         # Feedback from sensors
-        self.y = np.zeros(3) # M1 = [1], M2 = [1]
-        self.w = np.zeros(3)  # Velocity
+        self.y_raw = np.zeros(3) # M1 = [1], M2 = [1]
+        self.w_raw = np.zeros(3)  # Velocity
+        self.y     = np.zeros(3) # M1 = [1], M2 = [1]
+        self.w     = np.zeros(3)  # Velocity
         
         # Memory for speed filter
-        self.y_past = np.zeros(3)   # t-1 value
-        self.w_past = np.zeros(3)  # t-1 value
+        self.y_past = np.zeros(3)  # t-1 value
         self.w_x    = np.zeros(3)  # state of the filter
         
         self.dt = 0.02
-        RC      = 1.0
+        RC      = 0
         
         self.alpha = self.dt / ( RC + self.dt )
         print self.alpha
         
         
         #Motor signs: TODO read from params
-        self.m_sign = [-1,1]
-        self.g      = [1,1,1]   # Gear ratios [output,M1,M2]
+        self.signs = [1,-1,1]
+        self.g      = np.array([  1 , 1./4./500. , 1./72./500. ])   # Gear ratios [output,M1,M2] (ticks to output units)
         
         
         # Init flexsea input msg
@@ -89,8 +90,8 @@ class DSDM_CTL(object):
         ##########################################
         
         # Adjust for sign
-        self.setpoints[0] = self.setpoints[0] * self.m_sign[0]
-        self.setpoints[1] = self.setpoints[1] * self.m_sign[1]
+        self.setpoints[0] = self.setpoints[0] * self.signs[1]
+        self.setpoints[1] = self.setpoints[1] * self.signs[2]
         
         # Publish Motor cmd
         self.pub_cmd()
@@ -116,6 +117,7 @@ class DSDM_CTL(object):
         self.update_feedback( msg , 2 )
         
         # For asynchrone ctl
+        self.decode_feedback()
         self.controller()
         self.pub_feedback( msg )
         
@@ -123,21 +125,33 @@ class DSDM_CTL(object):
     ############################################
     def update_feedback( self , msg , motor_ID ):
         """ """
-        self.y_past[ motor_ID ] = self.y[ motor_ID ]
-        self.y[ motor_ID ]      = msg.encoder
+
+        self.y_raw[ motor_ID ]      = msg.encoder * self.signs[ motor_ID ]
         
-        # TODO : FILTER diff for speed
-        dy = self.y[ motor_ID ] - self.y_past[ motor_ID ]
         
-        w  = ( dy + 0.0)  / self.dt      
+    ############################################
+    def decode_feedback( self ):
+        """ """
         
-        w_filtered = self.alpha * self.w_x[ motor_ID ] + ( 1 - self.alpha ) * w
+        # Compute filtered speed with raw large values
+        self.w_raw       = self.y_raw - self.y_past                          # ticks per period
+        #print self.y_raw , self.y_past , self.w_raw
+        w                = ( self.w_raw + 0.0 ) / self.dt                    # ticks per seconds
+        w_filtered_ticks = self.alpha * w + ( 1 - self.alpha ) * self.w_x     # filter
         
-        self.w[ motor_ID ] = int( w_filtered )
-          
-        # Memory
-        self.w_x[    motor_ID ] = w_filtered
-        self.y_past[ motor_ID ] = self.y[ motor_ID ]
+        
+        # Kinematic
+        # Position 
+        self.y    = np.multiply( self.y_raw , self.g )          # for m1 & m2
+        self.y[0] = self.g[0] * ( self.y[1] + self.y[2] )  # output
+        # Speed [rad/sec] 
+        self.w    = np.multiply( w_filtered_ticks , self.g )    # M1 & M2
+        self.w[0] = self.g[0] * ( self.w[1] + self.w[2] )  # output
+        
+        
+        #Memory
+        self.w_x    = w_filtered_ticks
+        self.y_past = self.y_raw.copy()
         
         
     ###########################################
@@ -172,16 +186,16 @@ class DSDM_CTL(object):
         msg_y = dsdm_actuator_sensor_feedback()
         
         # Copy Header
-        
         msg_y.header.stamp     = msg.header.stamp 
         msg_y.header.frame_id  = msg.header.frame_id
         
         # Feedback info
-        
         msg_y.theta = self.y
         msg_y.w     = self.w
+        msg_y.y_raw = self.y_raw
+        msg_y.w_raw = self.w_raw
         
-        msg_y.test   = self.w[2]
+        msg_y.test   = self.w[0]
         
         self.pub_y.publish( msg_y )
         
