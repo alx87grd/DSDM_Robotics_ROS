@@ -81,15 +81,15 @@ class DSDM_CTL(object):
     def load_params(self, event):
         """ Load param on ROS server """
         
-        self.filter_rc     = rospy.get_param("filter_rc")
-        tpt                = rospy.get_param("ticks_per_turns")
-        out_corr           = rospy.get_param("output_units_corr")
-        r1                 = rospy.get_param("r1")
-        r2                 = rospy.get_param("r2")
-        rout               = rospy.get_param("rout")
-        m1_sign            = rospy.get_param("m1_sign")
-        m2_sign            = rospy.get_param("m2_sign")
-        out_sign           = rospy.get_param("out_sign")
+        self.filter_rc     = rospy.get_param("filter_rc",        0.05  )
+        tpt                = rospy.get_param("ticks_per_turns",   2000 )
+        out_corr           = rospy.get_param("output_units_corr",    1 )
+        r1                 = rospy.get_param("r1",                   1 )
+        r2                 = rospy.get_param("r2",                   1 )
+        rout               = rospy.get_param("rout",                 1 )
+        m1_sign            = rospy.get_param("m1_sign",              1 )
+        m2_sign            = rospy.get_param("m2_sign",              1 )
+        out_sign           = rospy.get_param("out_sign",             1 )
         
         #Motor signs
         self.signs = np.array( [ out_sign, m1_sign, m2_sign] )
