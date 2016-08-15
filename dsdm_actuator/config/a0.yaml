@@ -17,7 +17,7 @@ ticks_per_turns:   2000       # Encoder params
 output_units     :   '[meter]'          #
 output_units_corr:    0.0001591549      # from rad to meter : 1/ 2 * pi / 1000
 
-# Kinematic
+# Gear ratios
 r1:                   4       # gear ratio motor 1
 r2:                  72       # gear ratio motor 2
 rout:                20       # output reduction 

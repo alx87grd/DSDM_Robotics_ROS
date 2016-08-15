@@ -5,7 +5,7 @@ filter_rc:            0.05       # time constant for the filtered differentiatio
 
 
 # Units
-ticks_per_turns:   8000       # Encoder params
+ticks_per_turns:   2000       # Encoder params
 
 
 # Revolute output
