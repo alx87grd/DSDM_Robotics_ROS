@@ -93,7 +93,7 @@ class CTC_controller(object):
         # Testing 1-DOF 1-DSDM
         msg = dsdm_actuator_control_inputs()
         
-        msg.f  = u[0]  # effort
+        msg.f  = u[0] * 10000 / 0.03  # effort
         msg.k  = u[3]  # mode
         
         
