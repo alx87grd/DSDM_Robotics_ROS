@@ -4,7 +4,7 @@ import numpy as np
 
 # Ros stuff
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from dsdm_msgs.msg   import dsdm_robot_control_inputs
+from std_msgs.msg    import Float64MultiArray
 from dsdm_msgs.msg   import joint_position
 from dsdm_msgs.msg   import dsdm_actuator_sensor_feedback, dsdm_actuator_control_inputs
 
@@ -30,7 +30,7 @@ class CTC_controller(object):
         self.timer              = rospy.Timer( rospy.Duration.from_sec(0.1),    self.callback  )
         
         # Temp for testing, only one actuator
-        self.sub_state_feedback = rospy.Subscriber("a0/y", dsdm_actuator_sensor_feedback , self.update_state ,  queue_size=1      )
+        self.sub_state_feedback = rospy.Subscriber("x_hat", Float64MultiArray , self.update_state ,  queue_size=1      )
         
         # Assign controller
         self.R       = CM.BoeingArm()
@@ -51,26 +51,12 @@ class CTC_controller(object):
         
     #######################################   
     def update_state( self, msg ):
-        """ Load Ref setpoint """
+        """ state feedback """
         
         
-        a0_zero = 0.1
+        self.x = msg.data
         
         
-        a0  = msg.q + a0_zero
-        da0 = msg.dq 
-        
-        q0  = self.R.q0_fwd_kinematic( a0 )
-        
-        q = np.array([ q0 , 0 , 0 ])
-        
-        dq0 = self.R.jacobian_actuators( q )[0,0] * da0 
-        
-        dq = np.array([ dq0 , 0 , 0 ])
-        
-        x  = self.R.q2x( q , dq )
-        
-        self.x = x
         
     #######################################   
     def update_setpoint( self, msg ):

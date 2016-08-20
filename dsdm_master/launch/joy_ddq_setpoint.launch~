@@ -6,11 +6,13 @@
         </node>
 
 	<node pkg="dsdm_control" type="ctc_boeingarm_ddq_setpoint.py" name="ctl" output="screen">
-        </node>
-	
+        </node>	
 
 	<group ns="a0">
 		<include file="$(find dsdm_actuator)/launch/actuator.launch"/>
 	</group>
+
+	<node pkg="dsdm_sensing" type="observer.py" name="obs" output="screen">
+        </node>
 	
  </launch>

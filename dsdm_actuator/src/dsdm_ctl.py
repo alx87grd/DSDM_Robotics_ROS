@@ -5,7 +5,6 @@ from dsdm_msgs.msg import dsdm_actuator_control_inputs
 from dsdm_msgs.msg import dsdm_actuator_sensor_feedback
 from flexsea_execute.msg import inputs
 from flexsea_execute.msg import outputs
-from sensor_msgs.msg import Joy
 
 #########################################
 class DSDM_CTL(object):
@@ -51,8 +50,8 @@ class DSDM_CTL(object):
         self.w_raw = np.zeros(3)  # Velocity
         self.y     = np.zeros(3) # M1 = [1], M2 = [1]
         self.w     = np.zeros(3)  # Velocity
-        self.q     = 0
-        self.dq    = 0
+        self.a     = 0
+        self.da    = 0
         
         # Memory for speed filter
         self.y_past = np.zeros(3)  # t-1 value
@@ -184,11 +183,11 @@ class DSDM_CTL(object):
         # Position 
         self.y    = self.y_raw  * self.corr                         # for m1 & m2
         self.y[0] = self.g[1] * self.y[1] + self.g[2] * self.y[2]   # output rev
-        self.q    = self.signs[0] * self.corr[0] * self.g[0] * self.y[0]
+        self.a    = self.signs[0] * self.corr[0] * self.g[0] * self.y[0]
         # Speed [rad/sec] 
         self.w    = w_filtered_ticks * self.corr                    # M1 & M2
         self.w[0] = self.g[1] * self.w[1] + self.g[2] * self.w[2]   # output shaft
-        self.dq   = self.signs[0] * self.corr[0] * self.g[0] * self.w[0]
+        self.da   = self.signs[0] * self.corr[0] * self.g[0] * self.w[0]
         
         
         #Memory
@@ -237,8 +236,8 @@ class DSDM_CTL(object):
         msg_y.w     = self.w
         msg_y.y_raw = self.y_raw
         msg_y.w_raw = self.w_raw
-        msg_y.dq    = self.dq
-        msg_y.q     = self.q
+        msg_y.da    = self.da
+        msg_y.a     = self.a
         
         self.pub_y.publish( msg_y )
         
