@@ -42,20 +42,21 @@ class DSDM_OBS(object):
         self.sub_a2         = rospy.Subscriber("a2/y", dsdm_actuator_sensor_feedback , self.feedback_callback_a2 , queue_size=1 )
         
         # Timer
-        self.timer          = rospy.Timer( rospy.Duration.from_sec(0.2),    self.timer_callback  )
+        #self.timer          = rospy.Timer( rospy.Duration.from_sec(0.2),    self.timer_callback  )
         
-        # Load robot model
-        self.R       = CM.BoeingArm()
+        # Load params
+        self.load_params( None )
+        
+        # Load robot params
+        if self.robot_type == 'BoeingArm':
+            self.R       = CM.BoeingArm()
+            
+        elif self.robot_type == 'pendulum':
+            pass
+        
+        else:
+            print 'Error loading robot type'
 
-        #########################
-        
-        # Params
-        
-        self.a_zero = np.array( [0.05,0,0] ) 
-        
-        #self.load_params( None )
-        
-        
         # Variable Init
         self.a      = np.zeros( self.R.dof )       
         self.da     = np.zeros( self.R.dof )
@@ -66,10 +67,17 @@ class DSDM_OBS(object):
         if self.plot:
             self.R.show_3D( self.q )
             
+    ###########################################
+    def load_params(self, event):
+        """ Load param on ROS server """
         
-        #self.R.update_show_3D( [1,0,0] )
+        self.robot_type     = rospy.get_param("robot_type",  'BoeingArm'  )
+        a0_zero             = rospy.get_param("a0_zero",  0.05 )
+        a1_zero             = rospy.get_param("a1_zero",  0.00 )
+        a2_zero             = rospy.get_param("a2_zero",  0.00 )
         
-        #print 'LHFDSLHFLKDJHDSLHDLKHDFLKHDLKHDLDHFLD'
+        self.a_zero = np.array( [ a0_zero , a1_zero , a2_zero ] ) 
+            
             
     ###################################
     def main_callback(self):
@@ -92,14 +100,12 @@ class DSDM_OBS(object):
         
         
     ###################################
-    def timer_callback(self , event ):
+    def plot_update_callback(self , event ):
         """ """
         
         # Update graphic
         if self.plot:
             self.R.update_show_3D( self.q )
-            
-            print "GRAPH UPDATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     
     #######################################   
     def pub_state_estimate( self ):
@@ -146,8 +152,14 @@ if __name__ == '__main__':
     node = DSDM_OBS()
     #rospy.spin()
     
-    rate = rospy.Rate(10) # 10hz
+    rate = rospy.Rate(100) # 10hz
+    i    = 0
     while not rospy.is_shutdown():
         
-        node.timer_callback( None )
+        # Plot at 10 Hz
+        if node.plot & (i > 10):
+            node.plot_update_callback( None )
+            i = 0
+        else:
+            i = i + 1
         rate.sleep()

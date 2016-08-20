@@ -2,6 +2,7 @@
 import rospy
 import numpy as np
 from sensor_msgs.msg import Joy
+from std_msgs.msg    import Bool
 from dsdm_msgs.msg   import joint_position
 
 #########################################
@@ -14,7 +15,8 @@ class nav(object):
         self.verbose = True
         self.dof     = 3
         
-        self.pub_u        = rospy.Publisher("ddq_setpoint", joint_position , queue_size=1  )
+        self.pub_enable   = rospy.Publisher("enable", Bool  , queue_size=1                       )
+        self.pub_u        = rospy.Publisher("ddq_setpoint", joint_position  , queue_size=1       )
         self.sub_joy      = rospy.Subscriber("joy", Joy , self.joy_callback , queue_size=1       )
         
         
@@ -40,7 +42,7 @@ class nav(object):
             self.ddq_d[0]  = 0 
         ###########################
         
-        
+        self.pub_e( enable )
         self.pub_u_msg()
         
         if self.verbose:
@@ -57,6 +59,17 @@ class nav(object):
         msg.ddq = self.ddq_d
         
         self.pub_u.publish( msg )
+        
+        
+    #######################################   
+    def pub_e( self , enable ):
+        """ pub actuator cmd """
+        
+        msg     = Bool()
+        
+        msg.data = enable
+        
+        self.pub_enable.publish( msg )
         
 
             
