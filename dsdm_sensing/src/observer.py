@@ -52,7 +52,7 @@ class DSDM_OBS(object):
             self.R       = CM.BoeingArm()
             
         elif self.robot_type == 'pendulum':
-            pass
+            self.R       = CM.TestPendulum()
         
         else:
             print 'Error loading robot type'

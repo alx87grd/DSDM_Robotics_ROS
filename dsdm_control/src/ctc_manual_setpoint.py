@@ -30,7 +30,7 @@ class CTC_controller(object):
         
         
         # Timer
-        self.timer              = rospy.Timer( rospy.Duration.from_sec(0.1),    self.callback  )
+        #self.timer              = rospy.Timer( rospy.Duration.from_sec(0.01),    self.callback  )
         
         # Temp for testing, only one actuator
         self.sub_state_feedback = rospy.Subscriber("x_hat", Float64MultiArray , self.update_state ,  queue_size=1      )
@@ -47,7 +47,8 @@ class CTC_controller(object):
             self.CTC     = RminCTC.RminComputedTorqueController( self.R )
             
         elif self.robot_type == 'pendulum':
-            pass
+            self.R       = CM.TestPendulum()
+            self.CTC     = RminCTC.RminComputedTorqueController( self.R )
         
         else:
             print 'Error loading robot type'
@@ -55,12 +56,13 @@ class CTC_controller(object):
         # Load params
         self.CTC.w0            = 2.0
         self.CTC.zeta          = 0.7
-        self.CTC.n_gears       = 2
+        self.CTC.n_gears       = 1
         
         # INIT
         self.t_zero =  rospy.get_rostime()
         self.x      =  np.array([ 0 , 0 , 0 , 0 , 0 , 0])
         self.ddq_d  =  np.array([ 0 , 0 , 0 ])
+        self.dq_d   =  np.array([ 0 , 0 , 0 ])
         self.enable =  False
         
         
@@ -89,14 +91,20 @@ class CTC_controller(object):
             
         elif self.control_type == 'spd':
             
+            # Update setpoint to actual position + desired speed
+            [ q , dq ]    = self.R.x2q( self.x  )
+            self.CTC.goal = self.R.q2x( q , self.dq_d )
+            
             u = self.CTC.fixed_goal_ctl( x  , t )
+            
+        u[self.R.dof] = 1
         
         # Publish u
         self.pub_u( u )
         
         ##################
         if self.verbose:
-            rospy.loginfo("Controller: Published u = " + str(u) )
+            rospy.loginfo("Controller: e = " + str(self.CTC.q_e) + "de = " + str(self.CTC.dq_e) + "ddr =" + str(self.CTC.ddq_r) + " U = " + str(u) )
         
         
     #######################################   
@@ -105,6 +113,8 @@ class CTC_controller(object):
         
         
         self.x = msg.data
+        
+        self.callback( None )
         
         
     #######################################   
@@ -129,9 +139,8 @@ class CTC_controller(object):
         elif self.control_type == 'spd':
             
             # read setpoint as target speed and actual position
-            [ q , dq ]    = self.R.x2q( self.x  )
-            self.CTC.goal = self.R.q2x( q , msg.ddq )
-        
+            self.dq_d = msg.ddq
+            
             
     #######################################   
     def pub_u( self, u ):
@@ -145,11 +154,11 @@ class CTC_controller(object):
         # Testing 1-DOF 1-DSDM
         msg = dsdm_actuator_control_inputs()
         
-        safety = 0.5
+        safety = 2
         
         if self.enable:
         
-            msg.f  = u[0] * 10000 / 0.03 * safety # effort
+            msg.f  = -u[0] * 1000  / 0.03 * safety # effort
             msg.k  = u[3]  # mode
             
         else:
