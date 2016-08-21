@@ -69,7 +69,7 @@ class DSDM_CTL(object):
         # Idividual data
         self.setpoints      = [0,0]
         self.ctrl_modes     = [0,0]
-        self.brake_state_M1 = 0
+        self.brake_state    = 0
         
         # Time
         self.t_last = rospy.get_rostime()
@@ -89,13 +89,26 @@ class DSDM_CTL(object):
         m1_sign            = rospy.get_param("m1_sign",              1 )
         m2_sign            = rospy.get_param("m2_sign",              1 )
         out_sign           = rospy.get_param("out_sign",             1 )
+        m1_torque_sign     = rospy.get_param("m1_torque_sign",       1 )
+        m2_torque_sign     = rospy.get_param("m2_torque_sign",       1 )
+        kp                 = rospy.get_param("kp",                  10 )
+        ki                 = rospy.get_param("ki",                   0 )
+        kd                 = rospy.get_param("kd",                   0 )
+        self.mbrake        = rospy.get_param("mbrake",               2 )
+        self.ctl_mode      = rospy.get_param("ctl_mode",             1 )
+        m1_torque_gain     = rospy.get_param("m1_torque_gain",       1 )
+        m2_torque_gain     = rospy.get_param("m2_torque_gain",       1 )
         
         #Motor signs
-        self.signs = np.array( [ out_sign, m1_sign, m2_sign] )
+        self.signs        = np.array( [ out_sign, m1_sign, m2_sign] )
+        self.torque_gains = np.array( [ 0 ,  m1_torque_sign * m1_torque_gain, m2_torque_sign * m2_torque_gain] )
         
         # Gear ratios [output,M1,M2] (ticks to output units)
         self.corr  = np.array([ out_corr , ( 2. * np.pi ) / tpt  , ( 2. * np.pi ) / tpt ])
         self.g     = np.array([  rout    , 1./r1  , 1./r2  ])  
+        
+        # Gain
+        self.ctrl_gains      = [kp,ki,kd,0,0,0]
 
         
         
@@ -107,15 +120,15 @@ class DSDM_CTL(object):
         
         if ( self.k == 0 ):
             # High speed mode
-            self.setpoints        = [ self.f , 0 ] # Direct M1 PWM
-            self.ctrl_modes       = [      1 , 0 ] # PWM mode for M!
-            self.brake_state_M1   = 255 # Brake open
+            self.setpoints        = [ int( self.f * self.torque_gains[1] ), 0 ] # Direct M1 PWM
+            self.ctrl_modes       = [      self.ctl_mode              , 0 ] # PWM mode for M!
+            self.brake_state      = 255 # Brake open
             
         elif ( self.k ==1 ):
             # High force mode
-            self.setpoints        = [ 0 , self.f ] # Direct M1 PWM
-            self.ctrl_modes       = [ 0 , 1      ] # PWM mode for M!
-            self.brake_state_M1   = 0 # Brake close
+            self.setpoints        = [ 0 , int( self.f * self.torque_gains[2] ) ] # Direct M1 PWM
+            self.ctrl_modes       = [ 0 , self.ctl_mode                  ] # PWM mode for M!
+            self.brake_state      = 0 # Brake close
             
         
         ##########################################
@@ -208,14 +221,21 @@ class DSDM_CTL(object):
         msg_m1.ctrl_setpoint   = int( self.setpoints[0] )
         msg_m1.trap_mode       = self.trap_mode
         msg_m1.trap_values     = self.trap_values
-        msg_m1.brake_pwm       = 0
+        
         
         msg_m2.ctrl_mode       = self.ctrl_modes[1]
         msg_m2.ctrl_gains      = self.ctrl_gains 
         msg_m2.ctrl_setpoint   = int( self.setpoints[1] )
         msg_m2.trap_mode       = self.trap_mode
         msg_m2.trap_values     = self.trap_values
-        msg_m2.brake_pwm       = self.brake_state_M1
+        
+        if self.mbrake == 2:
+            msg_m1.brake_pwm       = 0
+            msg_m2.brake_pwm       = self.brake_state
+            
+        elif self.mbrake == 1:
+            msg_m1.brake_pwm       = self.brake_state
+            msg_m2.brake_pwm       = 0
         
         self.pub_cmd_m1.publish( msg_m1 )
         self.pub_cmd_m2.publish( msg_m2 )

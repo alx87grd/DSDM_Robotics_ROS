@@ -154,11 +154,9 @@ class CTC_controller(object):
         # Testing 1-DOF 1-DSDM
         msg = dsdm_actuator_control_inputs()
         
-        safety = 2
-        
         if self.enable:
         
-            msg.f  = -u[0] * 1000  / 0.03 * safety # effort
+            msg.f  = -u[0] 
             msg.k  = u[3]  # mode
             
         else:
