@@ -25,14 +25,13 @@ class CTC_controller(object):
         # Sub / pub
         self.sub_ddq            = rospy.Subscriber("ddq_setpoint", joint_position , self.update_setpoint ,  queue_size=1 )
         self.sub_enable         = rospy.Subscriber("enable"      , Bool           , self.update_enable   ,  queue_size=1 )
-        #self.pub_control        = rospy.Publisher("u", dsdm_robot_control_inputs , queue_size=1   )
-        self.pub_control        = rospy.Publisher("a0/u", dsdm_actuator_control_inputs , queue_size=1   )
+        #self.pub_control        = rospy.Publisher("u", dsdm_robot_control_inputs , queue_size=1   )     
+        self.pub_control        = rospy.Publisher("a0/u", dsdm_actuator_control_inputs , queue_size=1   )  # Temp for testing, only one actuator
         
         
         # Timer
         #self.timer              = rospy.Timer( rospy.Duration.from_sec(0.01),    self.callback  )
-        
-        # Temp for testing, only one actuator
+            
         self.sub_state_feedback = rospy.Subscriber("x_hat", Float64MultiArray , self.update_state ,  queue_size=1      )
         
         # Load ROS params

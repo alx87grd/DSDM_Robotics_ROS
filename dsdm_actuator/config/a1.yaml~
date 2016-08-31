@@ -28,10 +28,10 @@ m1_sign:    -1
 m2_sign:     1
 
 # Signs position current torque
-m1_torque_sign:  1
+m1_torque_sign:  -1
 m2_torque_sign:  1
-m1_torque_gain:  1755 # Nm per current units (18.5 mA)
-m2_torque_gain:  1755 #
+m1_torque_gain:  32467 #   mA per Nm
+m2_torque_gain:  32467 #
 
 # Gains
 kp:  30

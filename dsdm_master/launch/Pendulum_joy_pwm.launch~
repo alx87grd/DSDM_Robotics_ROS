@@ -3,7 +3,7 @@
         <node pkg="joy" type="joy_node" name="joy" output="screen">
         </node>
 
-	<node pkg="dsdm_actuator" type="joy_stick_dsdm_test.py" name="nav" output="screen">
+	<node pkg="dsdm_actuator" type="joy_stick_dsdm_pwm.py" name="nav" output="screen">
         </node>
 
 	<group ns="a0">

@@ -229,10 +229,12 @@ class DSDM_CTL(object):
         msg_m2.trap_mode       = self.trap_mode
         msg_m2.trap_values     = self.trap_values
         
+        # Brake is wired to board ID#2
         if self.mbrake == 2:
             msg_m1.brake_pwm       = 0
             msg_m2.brake_pwm       = self.brake_state
-            
+        
+        # Brake is wired to board ID#1
         elif self.mbrake == 1:
             msg_m1.brake_pwm       = self.brake_state
             msg_m2.brake_pwm       = 0
