@@ -12,7 +12,7 @@ class nav(object):
     """
     def __init__(self):
         
-        self.verbose = True
+        self.verbose = False
         self.dof     = 3
         
         self.pub_enable   = rospy.Publisher("enable", Bool  , queue_size=1                       )
@@ -35,10 +35,11 @@ class nav(object):
         ######################
         if enable:
             # Pick set_point with joysticks gain
-            self.ddq_d[0]  =    msg.axes[1] #int( msg.axes[1] * 1  )
+            self.ddq_d[0]  =    msg.axes[1] * np.pi  #int( msg.axes[1] * 1  )
                 
                 
         else:
+            
             self.ddq_d[0]  = 0 
         ###########################
         

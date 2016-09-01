@@ -5,7 +5,7 @@ import numpy as np
 # Ros stuff
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from std_msgs.msg    import Float64MultiArray, Bool
-from dsdm_msgs.msg   import joint_position
+from dsdm_msgs.msg   import joint_position, ctl_error
 from dsdm_msgs.msg   import dsdm_actuator_sensor_feedback, dsdm_actuator_control_inputs
 
 
@@ -22,23 +22,26 @@ class CTC_controller(object):
         
         self.verbose = True
         
-        # Sub / pub
+        # Sub 
         self.sub_ddq            = rospy.Subscriber("ddq_setpoint", joint_position , self.update_setpoint ,  queue_size=1 )
         self.sub_enable         = rospy.Subscriber("enable"      , Bool           , self.update_enable   ,  queue_size=1 )
+        self.sub_state_feedback = rospy.Subscriber("x_hat"       , Float64MultiArray , self.update_state ,  queue_size=1 )
+        
+        # Pub
         #self.pub_control        = rospy.Publisher("u", dsdm_robot_control_inputs , queue_size=1   )     
         self.pub_control        = rospy.Publisher("a0/u", dsdm_actuator_control_inputs , queue_size=1   )  # Temp for testing, only one actuator
-        
+        #self.pub_control        = rospy.Publisher("CTC_U", dsdm_actuator_control_inputs , queue_size=1   ) 
+        self.pub_e              = rospy.Publisher("ctc_error", ctl_error               , queue_size=1  )
         
         # Timer
         #self.timer              = rospy.Timer( rospy.Duration.from_sec(0.01),    self.callback  )
-            
-        self.sub_state_feedback = rospy.Subscriber("x_hat", Float64MultiArray , self.update_state ,  queue_size=1      )
         
         # Load ROS params
         self.load_params( None )
         
         #self.control_type = 'acc'
-        self.control_type = 'spd'
+        #self.control_type = 'spd'
+        self.control_type = 'pos'
         
         # Assign controller
         if self.robot_type == 'BoeingArm':
@@ -58,18 +61,23 @@ class CTC_controller(object):
         self.CTC.n_gears       = 1
         
         # INIT
-        self.t_zero =  rospy.get_rostime()
-        self.x      =  np.array([ 0 , 0 , 0 , 0 , 0 , 0])
-        self.ddq_d  =  np.array([ 0 , 0 , 0 ])
-        self.dq_d   =  np.array([ 0 , 0 , 0 ])
-        self.enable =  False
+        self.t_zero   =  rospy.get_rostime()
+        self.x        =  np.array([ 0 , 0 , 0 , 0 , 0 , 0])
+        self.ddq_d    =  np.array([ 0 , 0 , 0 ])
+        self.dq_d     =  np.array([ 0 , 0 , 0 ])
+        self.q_d      =  np.array([ 0 , 0 , 0 ])
+        self.enable   =  False
+        self.setpoint = 0
+        self.actual   = 0
+        self.e        = 0
+        self.de       = 0
         
         
     ###########################################
     def load_params(self, event):
         """ Load param on ROS server """
         
-        self.robot_type     = rospy.get_param("robot_type",  'BoeingArm'  )
+        self.robot_type     = rospy.get_param("robot_type",  'pendulum'  )
 
         
     #######################################   
@@ -88,6 +96,9 @@ class CTC_controller(object):
             
             u = self.CTC.manual_acc_ctl(  x , t )
             
+            # Debug
+            self.actual = x[0]
+            
         elif self.control_type == 'spd':
             
             # Update setpoint to actual position + desired speed
@@ -95,8 +106,25 @@ class CTC_controller(object):
             self.CTC.goal = self.R.q2x( q , self.dq_d )
             
             u = self.CTC.fixed_goal_ctl( x  , t )
+
+            # Debug
+            self.actual = dq[0]
+            self.e = self.CTC.dq_e[0]
             
-        u[self.R.dof] = 1
+            
+        elif self.control_type == 'pos':
+            
+            [ q , dq ]    = self.R.x2q( self.x  )
+            self.CTC.goal = self.R.q2x( self.q_d , self.dq_d )
+            
+            u = self.CTC.fixed_goal_ctl( x  , t )
+
+            # Debug
+            self.actual = q[0]
+            self.e = self.CTC.q_e[0]
+        
+        # always high-force
+        u[ self.R.dof ] = 0
         
         # Publish u
         self.pub_u( u )
@@ -135,10 +163,24 @@ class CTC_controller(object):
             
             self.CTC.ddq_manual_setpoint = self.ddq_d
             
+            # Debug
+            self.setpoint = self.ddq_d[0]
+            
         elif self.control_type == 'spd':
             
             # read setpoint as target speed and actual position
             self.dq_d = msg.ddq
+            
+            # Debug
+            self.setpoint = self.dq_d[0]
+            
+        elif self.control_type == 'pos':
+            
+            # read setpoint as target position
+            self.q_d = msg.ddq
+            
+            # Debug
+            self.setpoint = self.q_d[0]
             
             
     #######################################   
@@ -155,7 +197,7 @@ class CTC_controller(object):
         
         if self.enable:
         
-            msg.f  = -u[0] 
+            msg.f  = u[0] 
             msg.k  = u[3]  # mode
             
         else:
@@ -165,6 +207,19 @@ class CTC_controller(object):
         
         
         self.pub_control.publish( msg )
+        
+        # Publish error data
+        msg              = ctl_error()
+        msg.header.stamp = rospy.Time.now()
+        msg.set_point    = self.setpoint
+        msg.actual       = self.actual
+        msg.e            = self.e  #self.CTC.q_e[0]
+        msg.de           = self.de #self.CTC.dq_e[0]
+        
+        self.pub_e.publish( msg )
+        
+        if self.verbose:
+            print('Error:', self.CTC.q_e[0] )
         
         
             
