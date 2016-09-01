@@ -34,7 +34,7 @@ class dsdm_pid(object):
         
         # PID
         self.enable = False
-        self.mode   = 'PID_speed'
+        self.mode   = 'PID_position'
         self.gain   = np.array([ 1.0 , 0 , 0 ])
         
     
