@@ -3,7 +3,7 @@ import rospy
 import numpy as np
 from std_msgs.msg    import Float64MultiArray
 from sensor_msgs.msg import Joy
-from dsdm_msgs.msg   import dsdm_actuator_control_inputs
+from dsdm_msgs.msg   import dsdm_actuator_control_inputs, ctl_error
 
 #########################################
 class dsdm_pid(object):
@@ -14,13 +14,17 @@ class dsdm_pid(object):
         
         self.verbose = True
         
+        # Publishers
         self.pub_u              = rospy.Publisher("a0/u", dsdm_actuator_control_inputs , queue_size=1  )
+        self.pub_e              = rospy.Publisher("pid_error", ctl_error               , queue_size=1  )
+        
+        # Suscribers
         self.sub_joy            = rospy.Subscriber("joy", Joy , self.joy_callback , queue_size=1       )
         self.sub_state_feedback = rospy.Subscriber("x_hat", Float64MultiArray , self.update_state ,  queue_size=1      )
         
         # Init DSDM msg
-        self.f = 0
-        self.k = 1 # High force mode
+        self.f  = 0
+        self.k  = 1 # High force mode
         
         # Init sensor feedback
         self.x  = np.zeros(2)
@@ -32,10 +36,18 @@ class dsdm_pid(object):
         self.joy_msg.axes    = [ 0 , 0 , 0 , 0 , 0 ]
         self.joy_msg.buttons = [ 0 , 0 , 0 , 0 , 0 ]
         
+        # Init ctl_error msg
+        self.e               = 0
+        self.de              = 0
+        self.set_point       = 0
+        self.actual          = 0
+        
         # PID
         self.enable = False
-        self.mode   = 'PID_position'
-        self.gain   = np.array([ 1.0 , 0 , 0 ])
+        #self.mode   = 'PID_position'
+        self.mode   = 'PID_speed'
+        self.gain   = np.array([ 0.2 , 0 , 0 ])
+        self.dt     = 0.02  # assuming 500 HZ
         
     
     #######################################   
@@ -70,6 +82,11 @@ class dsdm_pid(object):
                 
                 self.f = cmd * 0.03 
                 
+                # For debug
+                self.actual = self.a
+                self.e      = e
+                self.de     = de
+                
                 #  Pick mode with trigger
                 if ( self.joy_msg.axes[5] < 0):
                     self.k = 0
@@ -88,7 +105,12 @@ class dsdm_pid(object):
                 
                 cmd = kp * e + kd * de
                 
-                self.f = cmd * 0.03 
+                self.f = cmd * 0.03
+                
+                # For debug
+                self.actual = self.da
+                self.e      = e
+                self.de     = de
                 
                 #  Pick mode with trigger
                 if ( self.joy_msg.axes[5] < 0):
@@ -110,13 +132,22 @@ class dsdm_pid(object):
         
         self.joy_msg = msg
         
-        self.set_point = msg.axes[1]
+        self.set_point = msg.axes[1] * np.pi
         
         # Pick ctrl_mode with button state
         if ( msg.buttons[0] == 1 ):
             self.enable = True
         else:
             self.enable = False
+            
+        # Pick ctrl_mode with button state
+        if ( msg.buttons[1] == 1 ):
+            self.mode   = 'PID_position'
+        elif ( msg.buttons[2] == 1 ):
+            self.mode   = 'PID_speed'
+        else:
+            self.mode == 'PWM'
+            
             
             
     #######################################   
@@ -129,6 +160,19 @@ class dsdm_pid(object):
         msg.k = self.k
         
         self.pub_u.publish( msg )
+        
+        # Publish error data
+        msg              = ctl_error()
+        msg.header.stamp = rospy.Time.now()
+        msg.set_point    = self.set_point
+        msg.actual       = self.actual
+        msg.e            = self.e
+        msg.de           = self.de
+        
+        self.pub_e.publish( msg )
+        
+        if self.verbose:
+            print('Error:', self.e )
         
     
     #######################################   

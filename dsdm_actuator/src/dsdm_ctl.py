@@ -46,9 +46,9 @@ class DSDM_CTL(object):
         self.k = 1
         
         # Feedback from sensors
-        self.y_raw = np.zeros(3) # M1 = [1], M2 = [1]
+        self.y_raw = np.zeros(3)  # M1 = [1], M2 = [1]
         self.w_raw = np.zeros(3)  # Velocity
-        self.y     = np.zeros(3) # M1 = [1], M2 = [1]
+        self.y     = np.zeros(3)  # M1 = [1], M2 = [1]
         self.w     = np.zeros(3)  # Velocity
         self.a     = 0
         self.da    = 0
@@ -73,7 +73,6 @@ class DSDM_CTL(object):
         
         # Time
         self.t_last = rospy.get_rostime()
-        
         
         
     ###########################################
@@ -111,7 +110,6 @@ class DSDM_CTL(object):
         self.ctrl_gains      = [kp,ki,kd,0,0,0]
 
         
-        
     ###########################################
     def controller( self ):
         """ """
@@ -148,11 +146,13 @@ class DSDM_CTL(object):
         self.f = msg.f  # effort
         self.k = msg.k  # mode
         
+        
     ############################################
     def feedback_callback_m1( self , msg ):
         """ """
         
         self.update_feedback( msg , 1 )
+        
     
     ############################################
     def feedback_callback_m2( self , msg ):
