@@ -11,7 +11,7 @@ class nav(object):
     """
     def __init__(self):
         
-        self.verbose = True
+        self.verbose = False
         
         self.pub_u        = rospy.Publisher("a0/u", dsdm_actuator_control_inputs , queue_size=1  )
         self.sub_joy      = rospy.Subscriber("joy", Joy , self.joy_callback , queue_size=1       )
