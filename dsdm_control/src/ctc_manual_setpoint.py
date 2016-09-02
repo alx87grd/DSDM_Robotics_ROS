@@ -11,6 +11,7 @@ from dsdm_msgs.msg   import dsdm_actuator_sensor_feedback, dsdm_actuator_control
 
 from AlexRobotics.dynamic  import CustomManipulator    as CM
 from AlexRobotics.control  import RminComputedTorque   as RminCTC
+from AlexRobotics.planning import RandomTree           as RPRT
 
 
 #########################################
@@ -52,8 +53,12 @@ class CTC_controller(object):
         else:
             print 'Error loading robot type'
         
+        # Temp to load traj
+        self.RRT = RPRT.RRT( self.R , np.array( [0,0,0,0,0,0] ) )
+        self.RRT.load_solution( '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_control/data/pendulum_traj.npy'  )
+        
         # Load params
-        self.CTC.w0            = 2.0
+        self.CTC.w0            = 3.0
         self.CTC.zeta          = 0.7
         self.CTC.n_gears       = 1
         
@@ -69,6 +74,8 @@ class CTC_controller(object):
         self.actual   = 0
         self.e        = 0
         self.de       = 0
+        
+        self.traj_started = False
         
         
     ###########################################
@@ -131,7 +138,17 @@ class CTC_controller(object):
             
         # Traj mode
         elif ( self.ctl_mode == 3 ) :
-            u = self.R.ubar
+            
+            if not( self.traj_started ) :
+                self.traj_init()
+                
+            u = self.CTC.ctl( x , t )
+                
+            #u = self.R.ubar
+                
+            # Debug
+            self.actual   = x[0]
+            self.e        = self.CTC.q_e[0]
         
         # always high-force
         u[ self.R.dof ] = 0
@@ -144,7 +161,18 @@ class CTC_controller(object):
             pass
             #rospy.loginfo("Controller: e = " + str(self.CTC.q_e) + "de = " + str(self.CTC.dq_e) + "ddr =" + str(self.CTC.ddq_r) + " U = " + str(u) )
         
+    
+    #######################################   
+    def traj_init( self ):
+        """ init traj following mode """
         
+        self.traj_started = True
+        
+        self.CTC.load_trajectory( self.RRT.solution )
+        self.CTC.goal  = np.array([0,0,0,0,0,0])
+        self.t_zero    =  rospy.get_rostime()
+        
+    
     #######################################   
     def update_state( self, msg ):
         """ state feedback """
