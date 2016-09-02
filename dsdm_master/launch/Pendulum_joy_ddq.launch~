@@ -5,7 +5,7 @@
         <node pkg="joy" type="joy_node" name="joy" output="screen">
         </node>
 
-        <node pkg="dsdm_navigation" type="joystick_setpoint_nav.py" name="nav" output="screen">
+        <node pkg="dsdm_navigation" type="joy_stick_ddq_nav.py" name="nav" output="screen">
         </node>
 
 	<node pkg="dsdm_control" type="ctc_manual_setpoint.py" name="ctl" output="screen">

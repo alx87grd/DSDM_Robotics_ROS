@@ -4,7 +4,7 @@ import numpy as np
 
 # Ros stuff
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from std_msgs.msg    import Float64MultiArray, Bool
+from std_msgs.msg    import Float64MultiArray, Bool, Int32
 from dsdm_msgs.msg   import joint_position, ctl_error
 from dsdm_msgs.msg   import dsdm_actuator_sensor_feedback, dsdm_actuator_control_inputs
 
@@ -23,8 +23,9 @@ class CTC_controller(object):
         self.verbose = True
         
         # Sub 
-        self.sub_ddq            = rospy.Subscriber("ddq_setpoint", joint_position , self.update_setpoint ,  queue_size=1 )
+        self.sub_set            = rospy.Subscriber("setpoint"    , joint_position , self.update_setpoint ,  queue_size=1 )
         self.sub_enable         = rospy.Subscriber("enable"      , Bool           , self.update_enable   ,  queue_size=1 )
+        self.sub_mode           = rospy.Subscriber("ctl_mode"    , Int32          , self.update_mode     ,  queue_size=1 )
         self.sub_state_feedback = rospy.Subscriber("x_hat"       , Float64MultiArray , self.update_state ,  queue_size=1 )
         
         # Pub
@@ -38,10 +39,6 @@ class CTC_controller(object):
         
         # Load ROS params
         self.load_params( None )
-        
-        #self.control_type = 'acc'
-        #self.control_type = 'spd'
-        self.control_type = 'pos'
         
         # Assign controller
         if self.robot_type == 'BoeingArm':
@@ -67,6 +64,7 @@ class CTC_controller(object):
         self.dq_d     =  np.array([ 0 , 0 , 0 ])
         self.q_d      =  np.array([ 0 , 0 , 0 ])
         self.enable   =  False
+        self.ctl_mode = 0
         self.setpoint = 0
         self.actual   = 0
         self.e        = 0
@@ -92,14 +90,20 @@ class CTC_controller(object):
         t     = t_ros.to_sec()
         
         # Compute u
-        if self.control_type == 'acc':
+        
+        # ACC setpoint
+        if ( self.ctl_mode == 0 ) :
+            
+            self.CTC.ddq_manual_setpoint = self.ddq_d
             
             u = self.CTC.manual_acc_ctl(  x , t )
             
             # Debug
-            self.actual = x[0]
-            
-        elif self.control_type == 'spd':
+            self.actual   = x[0]
+            self.setpoint = self.ddq_d[0]
+        
+        # SPEED setpoint
+        elif ( self.ctl_mode == 1 ) :
             
             # Update setpoint to actual position + desired speed
             [ q , dq ]    = self.R.x2q( self.x  )
@@ -108,11 +112,12 @@ class CTC_controller(object):
             u = self.CTC.fixed_goal_ctl( x  , t )
 
             # Debug
-            self.actual = dq[0]
-            self.e = self.CTC.dq_e[0]
+            self.actual   = dq[0]
+            self.setpoint = self.dq_d[0]
+            self.e        = self.CTC.dq_e[0]
             
-            
-        elif self.control_type == 'pos':
+        # POS setpoint
+        elif ( self.ctl_mode == 2 ) :
             
             [ q , dq ]    = self.R.x2q( self.x  )
             self.CTC.goal = self.R.q2x( self.q_d , self.dq_d )
@@ -120,8 +125,13 @@ class CTC_controller(object):
             u = self.CTC.fixed_goal_ctl( x  , t )
 
             # Debug
-            self.actual = q[0]
-            self.e = self.CTC.q_e[0]
+            self.actual   = q[0]
+            self.setpoint = self.q_d[0]
+            self.e        = self.CTC.q_e[0]
+            
+        # Traj mode
+        elif ( self.ctl_mode == 3 ) :
+            u = self.R.ubar
         
         # always high-force
         u[ self.R.dof ] = 0
@@ -131,25 +141,32 @@ class CTC_controller(object):
         
         ##################
         if self.verbose:
-            rospy.loginfo("Controller: e = " + str(self.CTC.q_e) + "de = " + str(self.CTC.dq_e) + "ddr =" + str(self.CTC.ddq_r) + " U = " + str(u) )
+            pass
+            #rospy.loginfo("Controller: e = " + str(self.CTC.q_e) + "de = " + str(self.CTC.dq_e) + "ddr =" + str(self.CTC.ddq_r) + " U = " + str(u) )
         
         
     #######################################   
     def update_state( self, msg ):
         """ state feedback """
         
-        
         self.x = msg.data
         
+        # Asynchrone control
         self.callback( None )
         
         
     #######################################   
     def update_enable( self, msg ):
-        """ state feedback """
-        
+        """ enable  """
         
         self.enable = msg.data
+        
+        
+    #######################################   
+    def update_mode( self, msg ):
+        """ mode """
+        
+        self.ctl_mode = msg.data
         
         
         
@@ -157,30 +174,9 @@ class CTC_controller(object):
     def update_setpoint( self, msg ):
         """ Load Ref setpoint """
         
-        if self.control_type == 'acc':
-        
-            self.ddq_d = msg.ddq
-            
-            self.CTC.ddq_manual_setpoint = self.ddq_d
-            
-            # Debug
-            self.setpoint = self.ddq_d[0]
-            
-        elif self.control_type == 'spd':
-            
-            # read setpoint as target speed and actual position
-            self.dq_d = msg.ddq
-            
-            # Debug
-            self.setpoint = self.dq_d[0]
-            
-        elif self.control_type == 'pos':
-            
-            # read setpoint as target position
-            self.q_d = msg.ddq
-            
-            # Debug
-            self.setpoint = self.q_d[0]
+        self.ddq_d = np.array( msg.ddq )
+        self.dq_d  = np.array( msg.dq  )
+        self.q_d   = np.array( msg.q   )        
             
             
     #######################################   
@@ -188,8 +184,7 @@ class CTC_controller(object):
         """ pub control inputs """
         
         #msg = dsdm_robot_control_inputs()
-        
-        
+
         #self.pub_control.publish( msg )
         
         # Testing 1-DOF 1-DSDM
@@ -219,7 +214,7 @@ class CTC_controller(object):
         self.pub_e.publish( msg )
         
         if self.verbose:
-            print('Error:', self.CTC.q_e[0] )
+            print('Error:', self.e )
         
         
             
