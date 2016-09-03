@@ -216,13 +216,14 @@ class DSDM_CTL(object):
         msg_m1 = inputs()
         msg_m2 = inputs()
         
+        msg_m1.header.stamp    = rospy.Time.now()        
         msg_m1.ctrl_mode       = self.ctrl_modes[0]
         msg_m1.ctrl_gains      = self.ctrl_gains 
         msg_m1.ctrl_setpoint   = int( self.setpoints[0] )
         msg_m1.trap_mode       = self.trap_mode
         msg_m1.trap_values     = self.trap_values
         
-        
+        msg_m2.header.stamp    = rospy.Time.now() 
         msg_m2.ctrl_mode       = self.ctrl_modes[1]
         msg_m2.ctrl_gains      = self.ctrl_gains 
         msg_m2.ctrl_setpoint   = int( self.setpoints[1] )
