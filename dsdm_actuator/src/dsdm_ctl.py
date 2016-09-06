@@ -83,24 +83,27 @@ class DSDM_CTL(object):
     def load_params(self, event):
         """ Load param on ROS server """
         
-        self.filter_rc     = rospy.get_param("filter_rc",        0.05  )
-        tpt                = rospy.get_param("ticks_per_turns",   2000 )
-        out_corr           = rospy.get_param("output_units_corr",    1 )
-        r1                 = rospy.get_param("r1",                   1 )
-        r2                 = rospy.get_param("r2",                   1 )
-        rout               = rospy.get_param("rout",                 1 )
-        m1_sign            = rospy.get_param("m1_sign",              1 )
-        m2_sign            = rospy.get_param("m2_sign",              1 )
-        out_sign           = rospy.get_param("out_sign",             1 )
-        m1_torque_sign     = rospy.get_param("m1_torque_sign",       1 )
-        m2_torque_sign     = rospy.get_param("m2_torque_sign",       1 )
-        kp                 = rospy.get_param("kp",                  10 )
-        ki                 = rospy.get_param("ki",                   0 )
-        kd                 = rospy.get_param("kd",                   0 )
-        self.mbrake        = rospy.get_param("mbrake",               2 )
-        self.ctl_mode      = rospy.get_param("ctl_mode",             1 )
-        m1_torque_gain     = rospy.get_param("m1_torque_gain",       1 )
-        m2_torque_gain     = rospy.get_param("m2_torque_gain",       1 )
+        self.filter_rc       = rospy.get_param("filter_rc",        0.05  )
+        tpt                  = rospy.get_param("ticks_per_turns",   2000 )
+        out_corr             = rospy.get_param("output_units_corr",    1 )
+        r1                   = rospy.get_param("r1",                   1 )
+        r2                   = rospy.get_param("r2",                   1 )
+        rout                 = rospy.get_param("rout",                 1 )
+        m1_sign              = rospy.get_param("m1_sign",              1 )
+        m2_sign              = rospy.get_param("m2_sign",              1 )
+        out_sign             = rospy.get_param("out_sign",             1 )
+        m1_torque_sign       = rospy.get_param("m1_torque_sign",       1 )
+        m2_torque_sign       = rospy.get_param("m2_torque_sign",       1 )
+        kp                   = rospy.get_param("kp",                  10 )
+        ki                   = rospy.get_param("ki",                   0 )
+        kd                   = rospy.get_param("kd",                   0 )
+        self.mbrake          = rospy.get_param("mbrake",               2 )
+        self.ctl_mode        = rospy.get_param("ctl_mode",             1 )
+        m1_torque_gain       = rospy.get_param("m1_torque_gain",       1 )
+        m2_torque_gain       = rospy.get_param("m2_torque_gain",       1 )
+        self.mA2units        = rospy.get_param("mA2units",             1 )
+        m1_max_current       = rospy.get_param("m1_max_current",  1000   )
+        m2_max_current       = rospy.get_param("m2_max_current",  1000   )
         
         #Motor signs
         self.signs        = np.array( [ out_sign, m1_sign, m2_sign] )
@@ -121,7 +124,8 @@ class DSDM_CTL(object):
         self.g_2         = rospy.get_param("g_2",            20 )
         self.w_eps       = rospy.get_param("w_eps",          10 )
         
-        self.max_current = 5000
+        # Max current
+        self.max_current = np.array([ m1_max_current , m2_max_current ])
 
         
     ###########################################
@@ -202,7 +206,7 @@ class DSDM_CTL(object):
                 
         
         # Satuation
-        self.setpoints = self.setpoints_saturation( self.setpoints )
+        self.setpoints_comm = self.setpoints_saturation( self.setpoints )
         
         # Publish Motor cmd
         self.pub_cmd()
@@ -233,16 +237,6 @@ class DSDM_CTL(object):
     def f2setpoint( self , f = 0 , motor_id = 1 ):
         
         setpoint = int( self.f * self.torque_gains[ motor_id ] )
-        
-        # Satuarations
-        if setpoint > self.max_current:
-            setpoint = self.max_current
-            
-        elif (setpoint < -self.max_current ) :
-            setpoint = -self.max_current
-            
-        else:
-            setpoint = setpoint
             
         return setpoint
         
@@ -250,18 +244,31 @@ class DSDM_CTL(object):
     ###########################################
     def setpoints_saturation( self , setpoints ):
         
-        for i in range( len(setpoints) ):
-            # Satuarations
-            if setpoints[i] > self.max_current:
-                setpoints[i]  = self.max_current
+        if self.ctl_mode == 3:
+            
+            # Current mode
+            
+            setpoints_comm = [0,0]
+        
+            for i in range( len(setpoints) ):
+                # Satuarations
+                if setpoints[i] > self.max_current[i]:
+                    setpoints[i]  = self.max_current[i]
+                    
+                elif (setpoints[i]  < -self.max_current[i]):
+                    setpoints[i]  = -self.max_current[i]
+                    
+                else:
+                    setpoints[i]  = setpoints[i] 
                 
-            elif (setpoints[i]  < -self.max_current) :
-                setpoints[i]  = -self.max_current
-                
-            else:
-                setpoints[i]  = setpoints[i] 
-                
-        return setpoints
+                # Units
+                setpoints_comm[i] =  int( setpoints[i] * self.mA2units )
+                    
+            return setpoints_comm
+            
+        else:
+            
+            return setpoints
                 
     
     
@@ -352,14 +359,14 @@ class DSDM_CTL(object):
         msg_m1.header.stamp    = rospy.Time.now()        
         msg_m1.ctrl_mode       = self.ctrl_modes[0]
         msg_m1.ctrl_gains      = self.ctrl_gains 
-        msg_m1.ctrl_setpoint   = int( self.setpoints[0] )
+        msg_m1.ctrl_setpoint   = int( self.setpoints_comm[0] )
         msg_m1.trap_mode       = self.trap_mode
         msg_m1.trap_values     = self.trap_values
         
         msg_m2.header.stamp    = rospy.Time.now() 
         msg_m2.ctrl_mode       = self.ctrl_modes[1]
         msg_m2.ctrl_gains      = self.ctrl_gains 
-        msg_m2.ctrl_setpoint   = int( self.setpoints[1] )
+        msg_m2.ctrl_setpoint   = int( self.setpoints_comm[1] )
         msg_m2.trap_mode       = self.trap_mode
         msg_m2.trap_values     = self.trap_values
         
@@ -396,6 +403,8 @@ class DSDM_CTL(object):
         msg_y.a     = self.a
         msg_y.w1    = self.w[1]
         msg_y.w2    = self.w[2]
+        msg_y.id1   = self.setpoints[0]
+        msg_y.id2   = self.setpoints[1]
         
         self.pub_y.publish( msg_y )
         

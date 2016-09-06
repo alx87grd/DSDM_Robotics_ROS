@@ -33,7 +33,7 @@ class nav(object):
         ######################
         if enable:
             # Pick set_point with joysticks gain
-            self.f  =    msg.axes[1] * 0.1
+            self.f  =    msg.axes[1] * 0.2
                 
             # Pick mode with trigger
             if ( msg.axes[5] < 0):
