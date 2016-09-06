@@ -28,10 +28,10 @@ m1_sign:    -1
 m2_sign:     1
 
 # Signs position current torque
-m1_torque_sign:  1
+m1_torque_sign:  -1
 m2_torque_sign:  -1
-m1_torque_gain:  5072 #    Nm --> mA (32467)  mA --> int (1/6.4)
-m2_torque_gain:  5072 #  
+m1_torque_gain:  50720  #5072 #    Nm --> mA (32467)  mA --> int (1/6.4)
+m2_torque_gain:  50720  #5072 #  
 
 # Gains
 kp:  30
@@ -43,3 +43,11 @@ ctl_mode: 3  # 1: PWM 2: Position 3: Current 4: Impedence 5: Custom
 
 # Brake on which board?
 mbrake: 2
+
+
+# DSDM sync controller
+g_sync_kd :    1    # overall gain
+g_sync_ki :    0.07  # integral gain
+g_1       :   -1    # motor 1 component
+g_2       :   20    # motor 2 component
+w_eps     :   10    # allowable velocity before engaging the brake [rad/sec]

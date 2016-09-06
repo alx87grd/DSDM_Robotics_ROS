@@ -7,7 +7,7 @@
         </node>
 
 	<group ns="a0">
-		<include file="$(find dsdm_actuator)/launch/actuator_a1_pwm.launch"/>
+		<include file="$(find dsdm_actuator)/launch/actuator_a1.launch"/>
 	</group>
 
 	<rosparam command="load" file="$(find dsdm_master)/config/Pendulum.yaml"/>

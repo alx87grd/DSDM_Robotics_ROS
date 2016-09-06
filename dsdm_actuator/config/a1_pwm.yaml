@@ -39,15 +39,15 @@ ki:  10
 kd:   0
 
 # Control mode
-ctl_mode: 3  # 1: PWM 2: Position 3: Current 4: Impedence 5: Custom
+ctl_mode: 1  # 1: PWM 2: Position 3: Current 4: Impedence 5: Custom
 
 # Brake on which board?
 mbrake: 2
 
 
 # DSDM sync controller
-g_sync_kd :    1    # overall gain
-g_sync_ki :    0.1  # integral gain
+g_sync_kd :    0    # overall gain
+g_sync_ki :    0    # integral gain
 g_1       :   -1    # motor 1 component
 g_2       :   20    # motor 2 component
-w_eps     :   10    # allowable velocity before engaging the brake [rad/sec]
+w_eps     : 1000    # allowable velocity before engaging the brake [rad/sec]
