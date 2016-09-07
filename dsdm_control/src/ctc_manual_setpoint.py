@@ -58,9 +58,15 @@ class CTC_controller(object):
         self.RRT.load_solution( '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_control/data/pendulum_traj.npy'  )
         
         # Load params
-        self.CTC.w0            = 3.0
+        self.CTC.w0            = 2.0
         self.CTC.zeta          = 0.7
         self.CTC.n_gears       = 1
+        
+        # Gear params
+        R_HS  = self.CTC.R.R[0]
+        R_HF  = self.CTC.R.R[1]
+        
+        self.CTC.R.R = [ R_HS ] # only HF
         
         # INIT
         self.t_zero   =  rospy.get_rostime()
@@ -151,14 +157,15 @@ class CTC_controller(object):
             self.e        = self.CTC.q_e[0]
         
         # always high-force
-        u[ self.R.dof ] = 1
+        u[ self.R.dof ] = 0
         
         # Publish u
         self.pub_u( u )
         
+        
         ##################
         if self.verbose:
-            pass
+            print u
             #rospy.loginfo("Controller: e = " + str(self.CTC.q_e) + "de = " + str(self.CTC.dq_e) + "ddr =" + str(self.CTC.ddq_r) + " U = " + str(u) )
         
     
@@ -242,8 +249,8 @@ class CTC_controller(object):
         self.pub_e.publish( msg )
         
         if self.verbose:
-            print('Error:', self.e )
-        
+            #print('Error:', self.e )
+            pass
         
             
     
