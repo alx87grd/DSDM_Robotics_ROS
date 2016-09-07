@@ -151,7 +151,7 @@ class CTC_controller(object):
             self.e        = self.CTC.q_e[0]
         
         # always high-force
-        u[ self.R.dof ] = 0
+        u[ self.R.dof ] = 1
         
         # Publish u
         self.pub_u( u )
