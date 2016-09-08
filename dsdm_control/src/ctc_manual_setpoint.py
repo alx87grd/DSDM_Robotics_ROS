@@ -58,7 +58,7 @@ class CTC_controller(object):
         self.RRT.load_solution( '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_control/data/pendulum_traj_test0.npy'  )
         
         # Load params
-        self.CTC.w0            = 30.0
+        self.CTC.w0            = 3.0
         self.CTC.zeta          = 0.7
         self.CTC.n_gears       = 2              ##########
         

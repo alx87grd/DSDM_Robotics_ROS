@@ -43,7 +43,7 @@ class logger(object):
         
         
         # INIT
-        self.DATA = np.zeros((1,11))
+        self.DATA = np.zeros((1,13))
         
         
         name      = 'test'
@@ -65,7 +65,7 @@ class logger(object):
          
         t     = rospy.get_rostime().to_sec()
         
-        data = np.array([[ self.q , self.dq , self.q_d , self.f , self.k , t, self.w1 , self.w2 , self.i1 , self.i2 , self.brake ]])
+        data = np.array([[ self.q , self.dq , self.q_d , self.f , self.k , t, self.w1 , self.w2 , self.i1 , self.i2 , self.brake , self.id1 , self.id2 ]])
         
         self.DATA = np.concatenate( ( self.DATA , data )  )
         
@@ -83,8 +83,10 @@ class logger(object):
         
         self.act_msg = msg
         
-        self.w1 = msg.w1
-        self.w2 = msg.w2
+        self.w1  = msg.w1
+        self.w2  = msg.w2
+        self.id1 = msg.id1
+        self.id2 = msg.id2
         
     #######################################   
     def update_state( self, msg ):
