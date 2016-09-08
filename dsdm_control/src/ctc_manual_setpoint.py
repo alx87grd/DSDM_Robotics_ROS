@@ -60,13 +60,13 @@ class CTC_controller(object):
         # Load params
         self.CTC.w0            = 30.0
         self.CTC.zeta          = 0.7
-        self.CTC.n_gears       = 1              ##########
+        self.CTC.n_gears       = 2              ##########
         
         # Gear params
         R_HS  = self.CTC.R.R[0]
         R_HF  = self.CTC.R.R[1]
         
-        self.CTC.R.R = [ R_HS ] # only HF
+        #self.CTC.R.R = [ R_HF ] # only HF
         
         self.R_HS = R_HS
         self.R_HF = R_HF
@@ -110,10 +110,10 @@ class CTC_controller(object):
         
         # Compute u
         
-        # test hack
-        if t > 3:
-            self.CTC.R.R = [ self.R_HS , self.R_HF ]
-            self.CTC.n_gears       = 2 
+#        # test hack
+#        if t > 3:
+#            self.CTC.R.R = [ self.R_HS , self.R_HF ]
+#            self.CTC.n_gears       = 2 
         
         # ACC setpoint
         if ( self.ctl_mode == 0 ) :
@@ -164,14 +164,18 @@ class CTC_controller(object):
             #u = self.R.ubar
                 
             # Debug
-            self.actual   = x[0]
-            self.e        = self.CTC.q_e[0]
+            self.actual         = x[0]
+            ddq_d , dq_d , q_d  = self.CTC.get_traj(t)
+            self.setpoint       = q_d[0]
+            self.e              = self.CTC.q_e[0]
         
-        # always high-force
-        if t > 3:
-            pass
-        else:
-            u[ self.R.dof ] = 0
+#        # always high-force
+#        if t > 3:
+#            pass
+#        else:
+#            u[ self.R.dof ] = 0
+        
+        #u[ self.R.dof ] = 1
         
         # Publish u
         self.pub_u( u )
