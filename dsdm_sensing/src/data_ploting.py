@@ -30,6 +30,8 @@ w2 = DATA[i:j,7]
 i1 = DATA[i:j,8] 
 i2 = DATA[i:j,9]
 b  = DATA[i:j,10] / 255.
+id1= DATA[i:j,11] 
+id2= DATA[i:j,12]
 
 
 ## Figures
@@ -105,6 +107,8 @@ def plot_currents():
     
     plot.plot( t ,  i1 , 'b')
     plot.plot( t ,  i2 , 'r')
+    plot.plot( t ,  id1 , 'g.')
+    plot.plot( t ,  id2 , 'c.')
     plot.grid(True)
     
     plot.set_ylabel('Currents [mA]' , fontsize=fontsize )
