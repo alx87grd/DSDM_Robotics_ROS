@@ -58,15 +58,22 @@ class CTC_controller(object):
         self.RRT.load_solution( '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_control/data/pendulum_traj_test0.npy'  )
         
         # Load params
-        self.CTC.w0            = 3.0
+        self.CTC.w0            = 8.0
         self.CTC.zeta          = 0.7
         self.CTC.n_gears       = 2              ##########
+        
+        self.CTC.hysteresis    = True
+        self.CTC.hys_level     = 0.001
+        self.CTC.min_delay     = 0.2
+        
+        self.CTC.R.dq_max_HF   = 1.3   # [rad/sec]
         
         # Gear params
         R_HS  = self.CTC.R.R[0]
         R_HF  = self.CTC.R.R[1]
         
-        #self.CTC.R.R = [ R_HF ] # only HF
+        #self.CTC.last_gear_i = 0
+        #self.CTC.R.R = [ R_HS ] # only HF
         
         self.R_HS = R_HS
         self.R_HF = R_HF
@@ -175,7 +182,7 @@ class CTC_controller(object):
 #        else:
 #            u[ self.R.dof ] = 0
         
-        #u[ self.R.dof ] = 1
+        #u[ self.R.dof ] = 0
         
         # Publish u
         self.pub_u( u )
