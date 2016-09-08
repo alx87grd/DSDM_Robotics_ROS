@@ -10,17 +10,17 @@ import matplotlib.pyplot as plt
 
 ## LOADING
 
-name      = 'test'
+name      = 'succes5'
 name      = '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_sensing/data/' + name + '.npy'
 
 DATA = np.load( name )
 
-i = 1 + 500 * 3
-j = 0 + 500 * 8
+i = 1 + 500 * 1.47
+j = 0 + 500 * 6.0
 
 ## DEOCODING
 q  = DATA[i:j,0]
-dq = DATA[i:j:,1]
+dq = DATA[i:j,1]
 qd = DATA[i:j,2]
 f  = DATA[i:j,3]
 k  = DATA[i:j,4]
@@ -44,7 +44,7 @@ def plot_main():
     matplotlib.rc('ytick', labelsize=fontsize )
     
     
-    simfig , plot = plt.subplots(2, sharex=True,figsize=(4, 3),dpi=400, frameon=True)
+    simfig , plot = plt.subplots(3, sharex=True,figsize=(4, 3),dpi=400, frameon=True)
     
     simfig.canvas.set_window_title('Closed loop trajectory')
     
@@ -52,10 +52,13 @@ def plot_main():
     plot[0].plot( t ,  qd , 'r')
     plot[0].grid(True)
     
-    plot[1].plot( t ,  f , 'b')
-    plot[1].plot( t ,  k * 0.1 , 'r')
-    #plot[1].plot( t ,  b , 'c')
+    plot[1].plot( t ,  dq , 'b')
     plot[1].grid(True)
+    
+    plot[2].plot( t ,  f , 'b')
+    plot[2].plot( t ,  k * 0.1 , 'r')
+    #plot[1].plot( t ,  b , 'c')
+    plot[2].grid(True)
     
     #plot[2].plot( t ,  w1 , 'b')
     #plot[2].plot( t ,  w2 , 'r')
