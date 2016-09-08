@@ -43,10 +43,10 @@ class logger(object):
         
         
         # INIT
-        self.DATA = np.zeros((1,13))
+        self.DATA = np.zeros((1,15))
         
         
-        name      = 'succes5'
+        name      = 'succes5+'
         
         self.name = '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_sensing/data/' + name + '.npy'
         
@@ -65,7 +65,7 @@ class logger(object):
          
         t     = rospy.get_rostime().to_sec()
         
-        data = np.array([[ self.q , self.dq , self.q_d , self.f , self.k , t, self.w1 , self.w2 , self.i1 , self.i2 , self.brake , self.id1 , self.id2 ]])
+        data = np.array([[ self.q , self.dq , self.q_d , self.f , self.k , t, self.w1 , self.w2 , self.i1 , self.i2 , self.brake , self.id1 , self.id2 , self.w1_raw , self.w2_raw ]])
         
         self.DATA = np.concatenate( ( self.DATA , data )  )
         
@@ -87,6 +87,10 @@ class logger(object):
         self.w2  = msg.w2
         self.id1 = msg.id1
         self.id2 = msg.id2
+        
+        self.w1_raw = msg.w_raw[1]
+        self.w2_raw = msg.w_raw[2]
+        
         
     #######################################   
     def update_state( self, msg ):
