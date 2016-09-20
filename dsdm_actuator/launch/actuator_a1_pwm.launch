@@ -1,6 +1,6 @@
 <launch>
 
-	<rosparam command="load" file="$(find dsdm_actuator)/config/a0.yaml"/>
+	<rosparam command="load" file="$(find dsdm_actuator)/config/a1_pwm.yaml"/>
 
 	<node pkg="dsdm_actuator" type="dsdm_ctl.py" name="ctl" output="screen">
 	</node>
