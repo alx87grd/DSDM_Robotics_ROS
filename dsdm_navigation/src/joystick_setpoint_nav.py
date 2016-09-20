@@ -2,7 +2,7 @@
 import rospy
 import numpy as np
 from sensor_msgs.msg import Joy
-from std_msgs.msg    import Bool
+from std_msgs.msg    import Bool, Int32
 from dsdm_msgs.msg   import joint_position
 
 #########################################
@@ -12,12 +12,13 @@ class nav(object):
     """
     def __init__(self):
         
-        self.verbose = False
-        self.dof     = 3
+        self.verbose      = False
+        self.dof          = 3
         
         # Publishers
-        self.pub_enable   = rospy.Publisher("enable", Bool  , queue_size=1                   )
         self.pub_u        = rospy.Publisher("setpoint", joint_position  , queue_size=1       )
+        self.pub_enable   = rospy.Publisher("enable"  , Bool            , queue_size=1       )
+        self.pub_mode     = rospy.Publisher("ctl_mode", Int32           , queue_size=1       )
         
         # Suscribers
         self.sub_joy      = rospy.Subscriber("joy", Joy , self.joy_callback , queue_size=1   )
@@ -63,28 +64,30 @@ class nav(object):
         
         # From setpoint to deisred traj
         if   (self.mode == 0 ):
-            self.q_d    = 0
-            self.dq_d   = 0
-            self.ddq_d  = self.setpoints * 50
+            self.q_d    = np.zeros( self.dof )
+            self.dq_d   = np.zeros( self.dof )
+            self.ddq_d  = self.setpoints         * 10 
             
         elif (self.mode == 1 ):
-            self.q_d    = 0
+            self.q_d    = np.zeros( self.dof )
             self.dq_d   = self.setpoints
-            self.ddq_d  = 0
+            self.ddq_d  = np.zeros( self.dof )
             
         elif (self.mode == 2 ):
             self.q_d    = self.setpoints
-            self.dq_d   = 0
-            self.ddq_d  = 0
+            self.dq_d   = np.zeros( self.dof )
+            self.ddq_d  = np.zeros( self.dof )
             
         else:
-            self.q_d    = 0
-            self.dq_d   = 0
-            self.ddq_d  = 0
+            self.q_d    = np.zeros( self.dof )
+            self.dq_d   = np.zeros( self.dof )
+            self.ddq_d  = np.zeros( self.dof )
             
         ###########################
-        self.pub_e( enable )
         self.pub_u_msg()
+        self.pub_e( enable )
+        self.pub_ctl_mode()
+        
         
         if self.verbose:
             
@@ -93,27 +96,35 @@ class nav(object):
             
     #######################################   
     def pub_u_msg( self ):
-        """ pub actuator cmd """
+        """ pub setpoint """
         
         msg     = joint_position()
 
-        msg.q   = self.q_d        
-        msg.dq  = self.dq_d
-        msg.ddq = self.ddq_d
+        msg.q   = self.q_d.tolist()       
+        msg.dq  = self.dq_d.tolist()
+        msg.ddq = self.ddq_d.tolist()
         
         self.pub_u.publish( msg )
         
         
     #######################################   
     def pub_e( self , enable ):
-        """ pub actuator cmd """
+        """ pub enable status """
         
-        msg     = Bool()
-        
+        msg      = Bool()
         msg.data = enable
         
         self.pub_enable.publish( msg )
         
+        
+    #######################################   
+    def pub_ctl_mode( self ):
+        """ pub ctr mode"""
+        
+        msg      = Int32()
+        msg.data = self.mode
+        
+        self.pub_mode.publish( msg )
 
             
 
