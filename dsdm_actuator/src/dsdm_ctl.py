@@ -222,7 +222,7 @@ class DSDM_CTL(object):
             
         else:
             # Brake behaving weird when reducing pwm...
-            # Not in used
+            # Not used
             self.brake_state      = 255  # Brake open
     
     ###########################################
