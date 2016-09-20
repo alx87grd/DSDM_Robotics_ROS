@@ -65,7 +65,7 @@ class nav(object):
         if   (self.mode == 0 ):
             self.q_d    = 0
             self.dq_d   = 0
-            self.ddq_d  = self.setpoints
+            self.ddq_d  = self.setpoints * 50
             
         elif (self.mode == 1 ):
             self.q_d    = 0

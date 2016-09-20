@@ -66,7 +66,7 @@ class nav(object):
         if   (self.mode == 0 ):
             self.q_d    = np.zeros( self.dof )
             self.dq_d   = np.zeros( self.dof )
-            self.ddq_d  = self.setpoints
+            self.ddq_d  = self.setpoints         * 10 
             
         elif (self.mode == 1 ):
             self.q_d    = np.zeros( self.dof )

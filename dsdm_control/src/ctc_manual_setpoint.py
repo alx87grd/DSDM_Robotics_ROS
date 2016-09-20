@@ -55,12 +55,28 @@ class CTC_controller(object):
         
         # Temp to load traj
         self.RRT = RPRT.RRT( self.R , np.array( [0,0,0,0,0,0] ) )
-        self.RRT.load_solution( '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_control/data/pendulum_traj.npy'  )
+        self.RRT.load_solution( '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_control/data/pendulum_traj_test0.npy'  )
         
         # Load params
-        self.CTC.w0            = 3.0
+        self.CTC.w0            = 8.0
         self.CTC.zeta          = 0.7
-        self.CTC.n_gears       = 1
+        self.CTC.n_gears       = 2              ##########
+        
+        self.CTC.hysteresis    = True
+        self.CTC.hys_level     = 0.001
+        self.CTC.min_delay     = 0.2
+        
+        self.CTC.R.dq_max_HF   = 1.3   # [rad/sec]
+        
+        # Gear params
+        R_HS  = self.CTC.R.R[0]
+        R_HF  = self.CTC.R.R[1]
+        
+        #self.CTC.last_gear_i = 0
+        #self.CTC.R.R = [ R_HS ] # only HF
+        
+        self.R_HS = R_HS
+        self.R_HF = R_HF
         
         # INIT
         self.t_zero   =  rospy.get_rostime()
@@ -76,6 +92,9 @@ class CTC_controller(object):
         self.de       = 0
         
         self.traj_started = False
+        
+        # Save data
+        # self.data = np.zeros( ( self.R.n + self.R.m + 1 , )
         
         
     ###########################################
@@ -97,6 +116,11 @@ class CTC_controller(object):
         t     = t_ros.to_sec()
         
         # Compute u
+        
+#        # test hack
+#        if t > 3:
+#            self.CTC.R.R = [ self.R_HS , self.R_HF ]
+#            self.CTC.n_gears       = 2 
         
         # ACC setpoint
         if ( self.ctl_mode == 0 ) :
@@ -147,20 +171,30 @@ class CTC_controller(object):
             #u = self.R.ubar
                 
             # Debug
-            self.actual   = x[0]
-            self.e        = self.CTC.q_e[0]
+            self.actual         = x[0]
+            ddq_d , dq_d , q_d  = self.CTC.get_traj(t)
+            self.setpoint       = q_d[0]
+            self.e              = self.CTC.q_e[0]
         
-        # always high-force
-        u[ self.R.dof ] = 0
+#        # always high-force
+#        if t > 3:
+#            pass
+#        else:
+#            u[ self.R.dof ] = 0
+        
+        #u[ self.R.dof ] = 0
         
         # Publish u
         self.pub_u( u )
         
+        
         ##################
         if self.verbose:
-            pass
+            print u
             #rospy.loginfo("Controller: e = " + str(self.CTC.q_e) + "de = " + str(self.CTC.dq_e) + "ddr =" + str(self.CTC.ddq_r) + " U = " + str(u) )
         
+        #xt  = np.append( x  , t )
+        #xtu = np.append( xt , u )
     
     #######################################   
     def traj_init( self ):
@@ -242,8 +276,8 @@ class CTC_controller(object):
         self.pub_e.publish( msg )
         
         if self.verbose:
-            print('Error:', self.e )
-        
+            #print('Error:', self.e )
+            pass
         
             
     
