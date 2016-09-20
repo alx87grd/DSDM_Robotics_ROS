@@ -40,6 +40,7 @@ class DSDM_CTL(object):
 
         ##########################
         # Variables initialization
+        self.INIT = True
 
         # Set point
         self.f = 0
@@ -74,29 +75,35 @@ class DSDM_CTL(object):
         # Time
         self.t_last = rospy.get_rostime()
         
+        # Brake state
+        self.time_brake_opened = 0
+        
         
     ###########################################
     def load_params(self, event):
         """ Load param on ROS server """
         
-        self.filter_rc     = rospy.get_param("filter_rc",        0.05  )
-        tpt                = rospy.get_param("ticks_per_turns",   2000 )
-        out_corr           = rospy.get_param("output_units_corr",    1 )
-        r1                 = rospy.get_param("r1",                   1 )
-        r2                 = rospy.get_param("r2",                   1 )
-        rout               = rospy.get_param("rout",                 1 )
-        m1_sign            = rospy.get_param("m1_sign",              1 )
-        m2_sign            = rospy.get_param("m2_sign",              1 )
-        out_sign           = rospy.get_param("out_sign",             1 )
-        m1_torque_sign     = rospy.get_param("m1_torque_sign",       1 )
-        m2_torque_sign     = rospy.get_param("m2_torque_sign",       1 )
-        kp                 = rospy.get_param("kp",                  10 )
-        ki                 = rospy.get_param("ki",                   0 )
-        kd                 = rospy.get_param("kd",                   0 )
-        self.mbrake        = rospy.get_param("mbrake",               2 )
-        self.ctl_mode      = rospy.get_param("ctl_mode",             1 )
-        m1_torque_gain     = rospy.get_param("m1_torque_gain",       1 )
-        m2_torque_gain     = rospy.get_param("m2_torque_gain",       1 )
+        self.filter_rc       = rospy.get_param("filter_rc",        0.05  )
+        tpt                  = rospy.get_param("ticks_per_turns",   2000 )
+        out_corr             = rospy.get_param("output_units_corr",    1 )
+        r1                   = rospy.get_param("r1",                   1 )
+        r2                   = rospy.get_param("r2",                   1 )
+        rout                 = rospy.get_param("rout",                 1 )
+        m1_sign              = rospy.get_param("m1_sign",              1 )
+        m2_sign              = rospy.get_param("m2_sign",              1 )
+        out_sign             = rospy.get_param("out_sign",             1 )
+        m1_torque_sign       = rospy.get_param("m1_torque_sign",       1 )
+        m2_torque_sign       = rospy.get_param("m2_torque_sign",       1 )
+        kp                   = rospy.get_param("kp",                  10 )
+        ki                   = rospy.get_param("ki",                   0 )
+        kd                   = rospy.get_param("kd",                   0 )
+        self.mbrake          = rospy.get_param("mbrake",               2 )
+        self.ctl_mode        = rospy.get_param("ctl_mode",             1 )
+        m1_torque_gain       = rospy.get_param("m1_torque_gain",       1 )
+        m2_torque_gain       = rospy.get_param("m2_torque_gain",       1 )
+        self.mA2units        = rospy.get_param("mA2units",             1 )
+        m1_max_current       = rospy.get_param("m1_max_current",  1000   )
+        m2_max_current       = rospy.get_param("m2_max_current",  1000   )
         
         #Motor signs
         self.signs        = np.array( [ out_sign, m1_sign, m2_sign] )
@@ -108,6 +115,17 @@ class DSDM_CTL(object):
         
         # Gain
         self.ctrl_gains      = [kp,ki,kd,0,0,0]
+        
+        # sync controller
+        self.g_sync_kp   = rospy.get_param("g_sync_kp",       1 )
+        self.g_sync_ki   = rospy.get_param("g_sync_ki",       0 )
+        self.sync_err_i  = 0
+        self.g_1         = rospy.get_param("g_1",            -1 )
+        self.g_2         = rospy.get_param("g_2",            20 )
+        self.w_eps       = rospy.get_param("w_eps",          10 )
+        
+        # Max current
+        self.max_current = np.array([ m1_max_current , m2_max_current ])
 
         
     ###########################################
@@ -117,26 +135,141 @@ class DSDM_CTL(object):
         # SIMPLE OPEN LOOP  wihtout synchronization
         
         if ( self.k == 0 ):
+            
+            #####################
             # High speed mode
-            self.setpoints        = [ int( self.f * self.torque_gains[1] ), 0 ] # Direct M1 PWM
-            self.ctrl_modes       = [      self.ctl_mode              , 0 ] # PWM mode for M!
-            self.brake_state      = 255 # Brake open
+            ###################
+            
+            # Main loop
+            self.setpoints        = [ self.f2setpoint( self.f , 1 ) , 0  ] # Direct force feedtrough in M1
+            
+            # Nullspace Loop
+            self.delta_setpoints  = np.array([ self.g_1 , self.g_2 ]) * ( self.g_sync_kp *  self.w[1] ) # Minimize M1 speed
+            
+            # Fusion of controllers
+            self.setpoints        = self.setpoints + self.delta_setpoints.astype( int )
+            
+            # Operating modes
+            self.ctrl_modes       = [  self.ctl_mode , self.ctl_mode ] # PWM mode for M!
+            #self.brake_state      = 255 # Brake open
+            self.brake_open()
+            
+            # Reset sync ctl
+            self.sync_err_i       = 0 # intergral effect
+            
+            
             
         elif ( self.k ==1 ):
-            # High force mode
-            self.setpoints        = [ 0 , int( self.f * self.torque_gains[2] ) ] # Direct M1 PWM
-            self.ctrl_modes       = [ 0 , self.ctl_mode                  ] # PWM mode for M!
-            self.brake_state      = 0 # Brake close
             
+            # velocity smaller than epsilon
+            sync_is_done = ( np.abs( self.w[1] ) < self.w_eps )
+            
+            #sync_is_done = True  # debug
+            
+            if sync_is_done:
+                
+                #########################
+                # High force mode
+                ########################
+                
+                # Main Loop
+                self.setpoints        = [ 0 , self.f2setpoint( self.f , 2 )  ] # Direct M1 PWM
+                
+                # Operating modes
+                self.ctrl_modes       = [ 0 , self.ctl_mode                  ] # M1 is oFF
+                #self.brake_state      = 0 # Brake close
+                self.brake_close()
+                
+                # Reset syn ctl
+                self.sync_err_i       = 0 # intergral effect
+                
+            else:
+                
+                ########################
+                # Sync controller
+                #######################
+                
+                # Main Loop
+                self.setpoints_HS     = [ self.f2setpoint( self.f , 1 ) , 0              ] # Direct M1 PWM
+                
+                # Nullspace sync controller : PI on w1 speed
+                self.delta_setpoints  = np.array([ self.g_1 , self.g_2 ]) * ( self.g_sync_kp *  self.w[1] + self.g_sync_ki * self.sync_err_i )
+                self.sync_err_i       = self.sync_err_i + self.w[1] # intergral effect
+                
+                # Fusion of controllers
+                self.setpoints        = self.setpoints_HS + self.delta_setpoints.astype( int )
+                
+                # Operating modes
+                self.ctrl_modes       = [      self.ctl_mode                  , self.ctl_mode  ] 
+                #self.brake_state      = 255 # Brake open
+                self.brake_open()
+                
         
-        ##########################################
-        
-        # Adjust for sign
-        self.setpoints[0] = self.setpoints[0] * self.signs[1]
-        self.setpoints[1] = self.setpoints[1] * self.signs[2]
+        # Satuation
+        self.setpoints_comm = self.setpoints_saturation( self.setpoints )
         
         # Publish Motor cmd
         self.pub_cmd()
+        
+        
+    ###########################################
+    def brake_open( self ):
+        """ set brake state on """
+        
+        if self.time_brake_opened < 1.0:
+            self.brake_state        = 255 # Brake open
+            self.time_brake_opened  = self.time_brake_opened + self.dt
+            
+        else:
+            # Brake behaving weird when reducing pwm...
+            # Not in used
+            self.brake_state      = 255  # Brake open
+    
+    ###########################################
+    def brake_close( self ):
+        """ set brake state off """
+    
+        self.brake_state       = 0 # Brake close
+        self.time_brake_opened = 0
+        
+        
+    ###########################################
+    def f2setpoint( self , f = 0 , motor_id = 1 ):
+        
+        setpoint = int( self.f * self.torque_gains[ motor_id ] )
+            
+        return setpoint
+        
+        
+    ###########################################
+    def setpoints_saturation( self , setpoints ):
+        
+        if self.ctl_mode == 3:
+            
+            # Current mode
+            
+            setpoints_comm = [0,0]
+        
+            for i in range( len(setpoints) ):
+                # Satuarations
+                if setpoints[i] > self.max_current[i]:
+                    setpoints[i]  = self.max_current[i]
+                    
+                elif (setpoints[i]  < -self.max_current[i]):
+                    setpoints[i]  = -self.max_current[i]
+                    
+                else:
+                    setpoints[i]  = setpoints[i] 
+                
+                # Units
+                setpoints_comm[i] =  int( setpoints[i] * self.mA2units )
+                    
+            return setpoints_comm
+            
+        else:
+            
+            return setpoints
+                
     
     
     ############################################
@@ -185,13 +318,19 @@ class DSDM_CTL(object):
         # Update digital filter values
         self.alpha = dt / ( self.filter_rc + dt )
         
+        # Init position to first read encoders values
+        if self.INIT:
+            self.INIT   = False
+            self.y_past = self.y_raw 
+        
         # Compute filtered speed with raw large values
-        self.w_raw       = self.y_raw - self.y_past                          # ticks per period
+        self.w_raw       = self.y_raw - self.y_past                      # ticks per period
         w                = ( self.w_raw + 0.0 ) / dt                         # ticks per seconds
         w_filtered_ticks = self.alpha * w + ( 1 - self.alpha ) * self.w_x    # filter
         
-        
+        ################
         # Kinematic
+        ###############
         
         # Position 
         self.y    = self.y_raw  * self.corr                         # for m1 & m2
@@ -207,6 +346,7 @@ class DSDM_CTL(object):
         self.w_x    = w_filtered_ticks
         self.y_past = self.y_raw.copy()
         self.t_last = t
+        self.dt     = dt
         
         
     ###########################################
@@ -216,16 +356,17 @@ class DSDM_CTL(object):
         msg_m1 = inputs()
         msg_m2 = inputs()
         
+        msg_m1.header.stamp    = rospy.Time.now()        
         msg_m1.ctrl_mode       = self.ctrl_modes[0]
         msg_m1.ctrl_gains      = self.ctrl_gains 
-        msg_m1.ctrl_setpoint   = int( self.setpoints[0] )
+        msg_m1.ctrl_setpoint   = int( self.setpoints_comm[0] )
         msg_m1.trap_mode       = self.trap_mode
         msg_m1.trap_values     = self.trap_values
         
-        
+        msg_m2.header.stamp    = rospy.Time.now() 
         msg_m2.ctrl_mode       = self.ctrl_modes[1]
         msg_m2.ctrl_gains      = self.ctrl_gains 
-        msg_m2.ctrl_setpoint   = int( self.setpoints[1] )
+        msg_m2.ctrl_setpoint   = int( self.setpoints_comm[1] )
         msg_m2.trap_mode       = self.trap_mode
         msg_m2.trap_values     = self.trap_values
         
@@ -260,6 +401,10 @@ class DSDM_CTL(object):
         msg_y.w_raw = self.w_raw
         msg_y.da    = self.da
         msg_y.a     = self.a
+        msg_y.w1    = self.w[1]
+        msg_y.w2    = self.w[2]
+        msg_y.id1   = self.setpoints[0]
+        msg_y.id2   = self.setpoints[1]
         
         self.pub_y.publish( msg_y )
         
