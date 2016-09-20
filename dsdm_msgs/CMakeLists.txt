@@ -53,6 +53,7 @@ add_message_files(
   dsdm_robot_control_inputs.msg
   dsdm_actuator_control_inputs.msg
   dsdm_actuator_sensor_feedback.msg
+  ctl_error.msg
  )
 
 ## Generate services in the 'srv' folder

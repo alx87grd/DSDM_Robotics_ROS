@@ -28,7 +28,7 @@ m2_sign:     1
 # Signs position current torque
 m1_torque_sign:  1
 m2_torque_sign:  1
-m1_torque_gain:  32467 # Nm per mA
+m1_torque_gain:  32467 #   mA per Nm
 m2_torque_gain:  32467 #
 
 # Gains
@@ -37,7 +37,7 @@ ki:  10
 kd:   0
 
 # Control mode
-ctl_mode: 1  # 1: PWM 2: Position 3: Current 4: Impedence 5: Custom
+ctl_mode: 3  # 1: PWM 2: Position 3: Current 4: Impedence 5: Custom
 
 # Brake on which board?
 mbrake: 2
