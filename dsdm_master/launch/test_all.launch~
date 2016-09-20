@@ -2,13 +2,13 @@
         <node pkg="joy" type="joy_node" name="joy" output="screen">
         </node>
 
-        <node pkg="navigation" type="joy_navigation.py" name="nav" output="screen">
+        <node pkg="dsdm_navigation" type="joy_navigation.py" name="nav" output="screen">
         </node>
 
-        <node pkg="planning" type="RRTplanner.py" name="plan" output="screen">
+        <node pkg="dsdm_planning" type="rrt_planner.py" name="plan" output="screen">
         </node>
 
-	<include file="$(find control)/launch/control.launch"/>
+	<include file="$(find dsdm_control)/launch/control.launch"/>
 
 	<group ns="a0">
 		<include file="$(find dsdm_actuator)/launch/actuator.launch"/>
