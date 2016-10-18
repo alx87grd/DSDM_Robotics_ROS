@@ -49,7 +49,7 @@ mbrake: 2
 
 
 # DSDM sync controller
-g_sync_kd :    1    # overall gain
+g_sync_kp :    1    # overall gain
 g_sync_ki :    0.1  # integral gain
 g_1       :   -1    # motor 1 component
 g_2       :   20    # motor 2 component

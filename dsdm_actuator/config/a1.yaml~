@@ -32,7 +32,7 @@ m1_torque_sign:  -1
 m2_torque_sign:  -1
 m1_torque_gain:  42467  #5072 #    Nm --> mA (32467)  mA --> int (1/6.4)
 m2_torque_gain:  802467  #5072 # 
-mA2units:        0.2 
+mA2units      :  0.2 
 m1_max_current: 8000 # mA
 m2_max_current: 8000 # mA
 
@@ -49,7 +49,7 @@ mbrake: 2
 
 
 # DSDM sync controller
-g_sync_kd :    1    # overall gain
+g_sync_kp :    1    # overall gain
 g_sync_ki :    0.1  # integral gain
 g_1       :   -1    # motor 1 component
 g_2       :   20    # motor 2 component
