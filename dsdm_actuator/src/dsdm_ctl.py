@@ -143,7 +143,7 @@ class DSDM_CTL(object):
             self.setpoints        = [ self.f2setpoint( self.f , 1 ) , 0  ] # Direct force feedtrough in M1
             
             # Nullspace Loop
-            self.delta_setpoints  = np.array([ self.g_1 , self.g_2 ]) * ( self.g_sync_kp *  self.w[1] ) # Minimize M1 speed
+            self.delta_setpoints  = np.array([ self.g_1 , self.g_2 ]) * ( self.g_sync_kp *  self.w[1]  ) # Minimize M1 speed
             
             # Fusion of controllers
             self.setpoints        = self.setpoints + self.delta_setpoints.astype( int )

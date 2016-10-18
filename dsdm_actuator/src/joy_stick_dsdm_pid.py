@@ -48,7 +48,7 @@ class dsdm_pid(object):
         #self.mode   = 'PID_position'
         #self.mode   = 'PID_speed'
         self.e_sum  = 0
-        self.gain   = np.array([ 0.2 , 0.1 , 0 ])
+        self.gain   = np.array([ 0.2 , 0.05 , 0.2 ])
         self.dt     = 0.02  # assuming 500 HZ
         
     
