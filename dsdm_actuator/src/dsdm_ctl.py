@@ -40,7 +40,8 @@ class DSDM_CTL(object):
 
         ##########################
         # Variables initialization
-        self.INIT = True
+        self.INIT        = True
+        self.sync_err_i  = 0
 
         # Set point
         self.f = 0
@@ -119,7 +120,6 @@ class DSDM_CTL(object):
         # sync controller
         self.g_sync_kp   = rospy.get_param("g_sync_kp",       1 )
         self.g_sync_ki   = rospy.get_param("g_sync_ki",       0 )
-        self.sync_err_i  = 0
         self.g_1         = rospy.get_param("g_1",            -1 )
         self.g_2         = rospy.get_param("g_2",            20 )
         self.w_eps       = rospy.get_param("w_eps",          10 )
@@ -132,7 +132,6 @@ class DSDM_CTL(object):
     def controller( self ):
         """ """
         
-        # SIMPLE OPEN LOOP  wihtout synchronization
         
         if ( self.k == 0 ):
             
@@ -182,6 +181,7 @@ class DSDM_CTL(object):
                 
                 # Reset syn ctl
                 self.sync_err_i       = 0 # intergral effect
+                
                 
             else:
                 
