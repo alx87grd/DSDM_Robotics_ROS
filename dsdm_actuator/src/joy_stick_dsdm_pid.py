@@ -12,7 +12,7 @@ class dsdm_pid(object):
     """
     def __init__(self):
         
-        self.verbose = True
+        self.verbose = False
         
         # Publishers
         self.pub_u              = rospy.Publisher("a0/u", dsdm_actuator_control_inputs , queue_size=1  )
@@ -44,9 +44,11 @@ class dsdm_pid(object):
         
         # PID
         self.enable = False
+        self.mode   = 'PWM'
         #self.mode   = 'PID_position'
-        self.mode   = 'PID_speed'
-        self.gain   = np.array([ 0.2 , 0 , 0 ])
+        #self.mode   = 'PID_speed'
+        self.e_sum  = 0
+        self.gain   = np.array([ 0.2 , 0.1 , 0 ])
         self.dt     = 0.02  # assuming 500 HZ
         
     
@@ -59,13 +61,15 @@ class dsdm_pid(object):
             # OPENLOOP
             if self.mode == 'PWM' :
                 # Pick set_point with joysticks gain
-                self.f  =    self.joy_msg.axes[1] * 0.03 
+                self.f  =    self.joy_msg.axes[1] * 0.2
                     
                 # Pick mode with trigger
                 if ( self.joy_msg.axes[5] < 0):
                     self.k = 0
                 else:
                     self.k = 1
+                    
+                self.e_sum = 0 # Reset integral error
                         
             
             # PID Position
@@ -74,13 +78,15 @@ class dsdm_pid(object):
                 e  = self.set_point - self.a
                 de = 0              - self.da
                 
+                self.e_sum = self.e_sum + e * self.dt
+                
                 kp = self.gain[0]
                 ki = self.gain[1]
                 kd = self.gain[2]
                 
-                cmd = kp * e + kd * de
+                cmd = kp * e + kd * de + ki * self.e_sum
                 
-                self.f = cmd * 0.03 
+                self.f = cmd * 0.2
                 
                 # For debug
                 self.actual = self.a
@@ -99,13 +105,15 @@ class dsdm_pid(object):
                 e  = self.set_point - self.da
                 de = 0
                 
+                self.e_sum = self.e_sum + e * self.dt
+                
                 kp = self.gain[0]
                 ki = self.gain[1]
                 kd = self.gain[2]
                 
-                cmd = kp * e + kd * de
+                cmd = kp * e + kd * de + ki * self.e_sum
                 
-                self.f = cmd * 0.03
+                self.f = cmd * 0.2
                 
                 # For debug
                 self.actual = self.da
@@ -141,12 +149,17 @@ class dsdm_pid(object):
             self.enable = False
             
         # Pick ctrl_mode with button state
+        #    Default
+        self.mode == 'PWM'
+            
         if ( msg.buttons[1] == 1 ):
             self.mode   = 'PID_position'
         elif ( msg.buttons[2] == 1 ):
             self.mode   = 'PID_speed'
         else:
             self.mode == 'PWM'
+            
+        #print self.mode
             
             
             
