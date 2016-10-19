@@ -41,6 +41,8 @@ class dsdm_pid(object):
         self.de              = 0
         self.set_point       = 0
         self.actual          = 0
+        self.n               = 0
+        self.n_d             = 0  # Nullspace setpoint
         
         # PID
         self.enable = False
@@ -125,10 +127,15 @@ class dsdm_pid(object):
                     self.k = 0
                 else:
                     self.k = 1
+                    
+            # Nullspace Target
+            self.n = self.n_d
+            
         
         else:
-            self.f = 0
-            self.k = 1
+            self.f   = 0
+            self.k   = 1
+            self.n_d = 0
         
         
         self.pub_u_msg()
@@ -140,7 +147,9 @@ class dsdm_pid(object):
         
         self.joy_msg = msg
         
-        self.set_point = msg.axes[1] * np.pi
+        self.set_point           = msg.axes[1] * np.pi
+        
+        self.n_d                 = msg.axes[4] 
         
         # Pick ctrl_mode with button state
         if ( msg.buttons[0] == 1 ):
@@ -171,18 +180,19 @@ class dsdm_pid(object):
         
         msg.f = self.f
         msg.k = self.k
+        msg.n = self.n
         
         self.pub_u.publish( msg )
         
         # Publish error data
-        msg              = ctl_error()
-        msg.header.stamp = rospy.Time.now()
-        msg.set_point    = self.set_point
-        msg.actual       = self.actual
-        msg.e            = self.e
-        msg.de           = self.de
+        msg2              = ctl_error()
+        msg2.header.stamp = rospy.Time.now()
+        msg2.set_point    = self.set_point
+        msg2.actual       = self.actual
+        msg2.e            = self.e
+        msg2.de           = self.de
         
-        self.pub_e.publish( msg )
+        self.pub_e.publish( msg2 )
         
         if self.verbose:
             print('Error:', self.e )
