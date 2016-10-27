@@ -2,10 +2,14 @@
 
 	<rosparam command="load" file="$(find dsdm_master)/config/BoeingArm.yaml"/>
 
-        <!--
+        
 	<node pkg="joy" type="joy_node" name="joy" output="screen">
         </node>
 
+	<node pkg="dsdm_actuator" type="joy_stick_dsdm_pid.py" name="PID" output="screen">
+        </node>
+
+	<!--
         //<node pkg="dsdm_navigation" type="joy_stick_ddq_nav.py" name="nav" output="screen">
         </node>
 
@@ -13,9 +17,7 @@
         </node>	
 	-->
 
-	<group ns="a0">
-		<include file="$(find dsdm_actuator)/launch/actuator.launch"/>
-	</group>
+	<include file="$(find dsdm_actuator)/launch/actuator_a0.launch"/>
 
 	<node pkg="dsdm_sensing" type="observer.py" name="obs" output="screen">
         </node>
