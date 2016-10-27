@@ -18,9 +18,9 @@ output_units_corr:    1       # Value correcting for output units that are not r
 #output_units_corr:    0.0001591549      # from rad to meter : 1/ 2 * pi / 1000
 
 # Gear ratios
-r1:                 23.2      # gear ratio motor 1
-r2:                 474       # gear ratio motor 2
-rout:                 1       # output reduction 
+r1:                 72       # gear ratio motor 1
+r2:               1225       # gear ratio motor 2
+rout:                1       # output reduction 
 
 # Signs Encoder
 out_sign:   -1 

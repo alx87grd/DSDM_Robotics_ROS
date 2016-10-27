@@ -5,7 +5,6 @@
 	<node pkg="dsdm_actuator" type="joy_stick_dsdm_test.py" name="nav" output="screen">
         </node>
 
- 	<group ns="a0">
-		<include file="$(find dsdm_actuator)/launch/actuator.launch"/>
-	</group>
+	<include file="$(find dsdm_actuator)/launch/actuator_a0.launch"/>
+
  </launch>
