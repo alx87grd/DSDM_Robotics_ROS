@@ -49,13 +49,13 @@ class CTC_controller(object):
         elif self.robot_type == 'pendulum':
             self.R       = CM.TestPendulum()
             self.CTC     = RminCTC.RminComputedTorqueController( self.R )
+            
+            # Temp to load traj
+            self.RRT = RPRT.RRT( self.R , np.array( [0,0,0,0,0,0] ) )
+            self.RRT.load_solution( '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_control/data/pendulum_traj_test0.npy'  )
         
         else:
             print 'Error loading robot type'
-        
-        # Temp to load traj
-        self.RRT = RPRT.RRT( self.R , np.array( [0,0,0,0,0,0] ) )
-        self.RRT.load_solution( '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_control/data/pendulum_traj_test0.npy'  )
         
         # Load params
         self.CTC.w0            = 8.0
