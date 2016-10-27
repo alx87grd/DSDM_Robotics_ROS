@@ -45,13 +45,14 @@ class dsdm_pid(object):
         self.n_d             = 0  # Nullspace setpoint
         
         # PID
-        self.enable = False
-        self.mode   = 'PWM'
-        #self.mode   = 'PID_position'
-        #self.mode   = 'PID_speed'
-        self.e_sum  = 0
-        self.gain   = np.array([ 0.2 , 0.05 , 0.2 ])
-        self.dt     = 0.02  # assuming 500 HZ
+        self.enable    = False
+        self.mode      = 'PWM'
+        #self.mode      = 'PID_position'
+        #self.mode      = 'PID_speed'
+        self.last_mode = self.mode
+        self.e_sum     = 0
+        self.gain      = np.array([ 0.2 , 0.05 , 0.2 ])
+        self.dt        = 0.02  # assuming 500 HZ
         
     
     #######################################   
@@ -168,7 +169,12 @@ class dsdm_pid(object):
         else:
             self.mode == 'PWM'
             
-        #print self.mode
+        # Reset Integral Error is mode changed
+        if not( self.last_mode == self.mode ):
+            
+            self.e_sum = 0
+            
+        self.last_mode = self.mode
             
             
             
