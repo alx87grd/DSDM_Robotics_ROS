@@ -50,6 +50,11 @@ class nav(object):
                 
             """ Shoulder """
             
+            self.f[1] = msg.axes[1] * 0.2
+            self.k[1] = not( msg.buttons[0] )
+            
+            
+            
             """ Elbow """
                 
         else:
