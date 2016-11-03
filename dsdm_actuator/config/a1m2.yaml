@@ -7,6 +7,6 @@
 # FLEXSEA_EXECUTE_3: 1 + FLEXSEA_EXECUTE_BASE
 # FLEXSEA_EXECUTE_4: 3 + FLEXSEA_EXECUTE_BASE
 
-port_name:     '/dev/ttyACM3'
+port_name:     '/dev/ttyACM2'
 execute_ID:    41
 actuator_name: 'execute #1 on usb port 0'
