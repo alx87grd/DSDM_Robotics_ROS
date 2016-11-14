@@ -13,6 +13,8 @@
 
 	<include file="$(find dsdm_actuator)/launch/actuator_a1.launch"/>
 
+	<include file="$(find dsdm_actuator)/launch/actuator_a2.launch"/>
+
 	<node pkg="dsdm_sensing" type="observer.py" name="obs" output="screen">
         </node>
 	

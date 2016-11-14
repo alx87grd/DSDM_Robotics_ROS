@@ -55,9 +55,15 @@ class nav(object):
             self.k[1] = not( msg.buttons[0] )
             self.n[1] = msg.axes[0] * 0.5
             
-            
-            
             """ Elbow """
+            
+            self.f[2] = msg.axes[4] * 0.2
+            self.k[2] = not( msg.buttons[1] )
+            self.n[2] = msg.axes[3] * 0.5
+            
+            
+            
+            
                 
         else:
             self.f = np.array([0.,0.,0.])
