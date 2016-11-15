@@ -61,9 +61,6 @@ class nav(object):
             self.k[2] = not( msg.buttons[1] )
             self.n[2] = msg.axes[3] * 0.5
             
-            
-            
-            
                 
         else:
             self.f = np.array([0.,0.,0.])
@@ -96,6 +93,7 @@ class nav(object):
         
         msg2.f = self.f[2]
         msg2.k = self.k[2]
+        msg2.n = self.n[2]
         
         self.pub_a0u.publish( msg0 )
         self.pub_a1u.publish( msg1 )
