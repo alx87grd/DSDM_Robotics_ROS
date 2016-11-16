@@ -41,6 +41,9 @@ class CTC_controller(object):
         self.trajectory_loaded = False
         self.t_zero = rospy.get_rostime()
         
+        # Fake state feedback
+        x = self.CTC.R.xbar
+        
         
         
     #######################################   
@@ -124,8 +127,8 @@ class CTC_controller(object):
     def callback( self, event ):
         """ Timed controller response """
         
-        # Fake state feedback
-        x = self.CTC.R.xbar
+        # State feedback
+        x = self.x
         
         # Get time
         t_ros = rospy.get_rostime() - self.t_zero
