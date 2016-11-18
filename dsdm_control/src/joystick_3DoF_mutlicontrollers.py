@@ -75,11 +75,11 @@ class Robot_controller(object):
             
         #####################
         # Update control mode
-        if msg.buttons[7] :
+        if msg.buttons[13] :
             self.mode = self.mode + 1
             print('--------- Control Mode set to : ' + self.modes[ self.mode ]  + ' ----------------------')
             
-        elif msg.buttons[7] :
+        elif msg.buttons[14] :
             self.mode = self.mode - 1
             print('--------- Control Mode set to : ' + self.modes[ self.mode ]  + ' ----------------------' )
         
