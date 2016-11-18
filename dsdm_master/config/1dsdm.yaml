@@ -3,8 +3,8 @@
 
 robot_type:     'BoeingArm'       # 
 robot_config:   'wrist-only'      #
-controller:     'RminCTC'         #   RminCTC or RfixCTC or RminSLD or RfixSLD or RollCTC or RollSLD
-fixed_mode:        1                #
+controller:     'RollSLD'         #   RminCTC or RfixCTC or RminSLD or RfixSLD or RollCTC or RollSLD
+fixed_mode:      1                #
 a0_zero:         0.05             # zero value of actuator 0
 a1_zero:         0.0              # zero value of actuator 1
 a2_zero:         0.0              # zero value of actuator 2
