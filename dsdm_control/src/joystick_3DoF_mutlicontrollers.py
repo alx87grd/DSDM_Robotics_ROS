@@ -104,6 +104,19 @@ class Robot_controller(object):
             self.Ctl = None
             
         
+        if self.robot_config == 'wrist-only':
+            self.Ctl.n_gears = 2
+            
+            self.Ctl.horizon   = 0.5
+            self.Ctl.hysteresis= True
+            self.Ctl.min_delay = 1.0
+            self.Ctl.sim_dt    = 0.1
+            
+            
+        elif self.robot_config == 'dual-plane' :
+            self.Ctl.n_gears = 4
+            
+        
     #######################################   
     def joy_callback( self, msg ):
         """ Read joystick states """
@@ -162,10 +175,6 @@ class Robot_controller(object):
         self.fd[2] = self.joy.axes[4] * 0.2
         self.kd[2] = not( self.joy.buttons[1] )
         self.nd[2] = self.joy.axes[3] * 0.5
-        
-        print self.fd
-        print self.kd
-        print self.nd
         
         ###################
         
