@@ -53,6 +53,10 @@ class Robot_controller(object):
         self.joy = Joy()                 # memory for last joy msg
         self.x   = np.zeros( self.R.n )  # Memory for robots state feedback
         
+        
+        # Timers
+        self.t_joy   =  rospy.get_rostime().to_sec()  # last joy change
+        
     ###########################################
     def load_params(self, event):
         """ Load param on ROS server """
@@ -65,6 +69,9 @@ class Robot_controller(object):
     def joy_callback( self, msg ):
         """ Read joystick states """
         
+        t_last = self.t_joy.to_sec()
+        t_now  = rospy.get_rostime().to_sec()
+        
         ######################
         # Enabled button state
         if ( msg.axes[2] < 0 ):
@@ -75,17 +82,20 @@ class Robot_controller(object):
             
         #####################
         # Update control mode
-        if msg.buttons[13] :
-            self.mode = self.mode + 1
-            print('--------- Control Mode set to : ' + self.modes[ self.mode ]  + ' ----------------------')
             
-        elif msg.buttons[14] :
-            self.mode = self.mode - 1
-            print('--------- Control Mode set to : ' + self.modes[ self.mode ]  + ' ----------------------' )
+        if ( ( t_now -  t_last ) > 0.5 ) :  # Avoid double detection
+            if msg.buttons[13] :
+                self.mode = self.mode + 1
+                print('--------- Control Mode set to : ' + self.modes[ self.mode ]  + ' ----------------------')
+                
+            elif msg.buttons[14] :
+                self.mode = self.mode - 1
+                print('--------- Control Mode set to : ' + self.modes[ self.mode ]  + ' ----------------------' )
         
         #########################
         # Save last buttons states
-        self.joy = msg
+        self.joy   = msg
+        self.t_joy = t_now
         
         
     #######################################   
@@ -112,40 +122,48 @@ class Robot_controller(object):
     #######################################   
     def control_callback( self, msg ):
         """ Main control loop """
-            
         
-        ######################
-        if enable:
+        #######################################
+        # Open Loop
+        if ( self.mode == 0 ):
             # Pick set_point with joysticks gain
         
             """ Ball screw DoF """
             #self.f  =    msg.axes[1] * 0.2
-            self.f[0] = msg.buttons[4] * 0.2 + msg.buttons[5] * -0.2 
+            self.f[0] = self.joy.buttons[4] * 0.2 + self.joy.buttons[5] * -0.2 
                 
             # Pick mode with trigger
-            if ( msg.axes[5] < 0):
+            if ( self.joy.axes[5] < 0):
                 self.k[0] = 0
             else:
                 self.k[0] = 1
                 
             """ Shoulder """
             
-            self.f[1] = msg.axes[1] * 0.2
-            self.k[1] = not( msg.buttons[0] )
-            self.n[1] = msg.axes[0] * 0.5
+            self.f[1] = self.joy.axes[1] * 0.2
+            self.k[1] = not( self.joy.buttons[0] )
+            self.n[1] = self.joy.axes[0] * 0.5
             
             """ Elbow """
             
-            self.f[2] = msg.axes[4] * 0.2
-            self.k[2] = not( msg.buttons[1] )
-            self.n[2] = msg.axes[3] * 0.5
+            self.f[2] = self.joy.axes[4] * 0.2
+            self.k[2] = not( self.joy.buttons[1] )
+            self.n[2] = self.joy.axes[3] * 0.5
             
-                
+        #######################################
+        # Closed Loop Acc
+        elif ( self.mode == 1 ):
+            
+            print self.x
+        
+        
+        #######################################
+        # Other
+        
         else:
             self.f = np.array([0.,0.,0.])
             self.k = np.array([1,1,1])
             self.n = np.array([0.,0.,0.])
-        ###########################
         
         
         self.pub_u_msg()
