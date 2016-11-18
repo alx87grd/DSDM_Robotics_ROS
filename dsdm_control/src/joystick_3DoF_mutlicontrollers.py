@@ -115,7 +115,7 @@ class Robot_controller(object):
             self.x = msg.data
 
         # Asynchrone control
-        #self.control_callback( None )
+        self.control_callback( None )
         
             
     
@@ -148,6 +148,7 @@ class Robot_controller(object):
             
             self.f[2] = self.joy.axes[4] * 0.2
             self.k[2] = not( self.joy.buttons[1] )
+
             self.n[2] = self.joy.axes[3] * 0.5
             
         #######################################
@@ -173,6 +174,7 @@ class Robot_controller(object):
             print( 'Ctrl mode: ', self.k , ' Set point: ', self.f )
             
             
+
     #######################################   
     def pub_u_msg( self ):
         """ pub actuator cmd """
