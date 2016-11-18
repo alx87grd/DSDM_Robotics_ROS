@@ -145,7 +145,7 @@ class Robot_controller(object):
         
         """ Ball screw DoF """
         #self.f  =    msg.axes[1] * 0.2
-        self.fd[0] = self.joy.buttons[4] * 0.2 + self.joy.buttons[5] * -0.2 
+        self.fd[0] = self.joy.buttons[4] * 0.1 + self.joy.buttons[5] * -0.1 
             
         # Pick mode with trigger
         if ( self.joy.axes[5] < 0):
@@ -162,6 +162,10 @@ class Robot_controller(object):
         self.fd[2] = self.joy.axes[4] * 0.2
         self.kd[2] = not( self.joy.buttons[1] )
         self.nd[2] = self.joy.axes[3] * 0.5
+        
+        print self.fd
+        print self.kd
+        print self.nd
         
         ###################
         
