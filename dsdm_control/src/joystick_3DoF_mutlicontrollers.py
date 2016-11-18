@@ -55,7 +55,7 @@ class Robot_controller(object):
         
         
         # Timers
-        self.t_joy   =  rospy.get_rostime().to_sec()  # last joy change
+        self.t_joy   =  rospy.get_rostime()  # last joy change
         
     ###########################################
     def load_params(self, event):
@@ -69,8 +69,8 @@ class Robot_controller(object):
     def joy_callback( self, msg ):
         """ Read joystick states """
         
-        t_last = self.t_joy.to_sec()
-        t_now  = rospy.get_rostime().to_sec()
+        t_last = self.t_joy
+        t_now  = rospy.get_rostime()
         
         ######################
         # Enabled button state
@@ -83,7 +83,7 @@ class Robot_controller(object):
         #####################
         # Update control mode
             
-        if ( ( t_now -  t_last ) > 0.5 ) :  # Avoid double detection
+        if ( ( t_now -  t_last ).to_sec() > 0.5 ) :  # Avoid double detection
             if msg.buttons[13] :
                 self.mode = self.mode + 1
                 print('--------- Control Mode set to : ' + self.modes[ self.mode ]  + ' ----------------------')
