@@ -308,7 +308,8 @@ class Robot_controller(object):
             # Debug
             if self.debug :
                 self.setpoint  = self.dq_d[ self.debug_i ]
-                self.actual    = dq[ self.debug_i ]
+                #self.actual    = dq[ self.debug_i ]
+                self.actual    = dq
             
             
         #######################################
@@ -324,7 +325,8 @@ class Robot_controller(object):
             # Debug
             if self.debug :
                 self.setpoint  = self.q_d[ self.debug_i ]
-                self.actual    = q[ self.debug_i ]
+                #self.actual    = q[ self.debug_i ]
+                self.actual    = q
             
             
         #######################################
