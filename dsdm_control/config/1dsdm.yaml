@@ -24,3 +24,4 @@ D:               1.5
 # Roll Only
 horizon:         0.5           #
 sim_dt:          0.1           #
+domain_check:    false  

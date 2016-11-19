@@ -142,6 +142,8 @@ class Robot_controller(object):
         self.Ctl.horizon    = rospy.get_param("horizon",  0.5  )
         self.Ctl.sim_dt     = rospy.get_param("sim_dt",  0.1  )
         
+        self.Ctl.domain_check = rospy.get_param("domain_check", False   )
+        
         # Base policy param for roll        
         if self.robot_ctl == 'RollCTC' :
             self.Ctl.FixCtl.lam   = self.Ctl.lam
