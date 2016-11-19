@@ -42,8 +42,8 @@ class DSDM_OBS(object):
         self.sub_a1         = rospy.Subscriber("a1/y", dsdm_actuator_sensor_feedback , self.feedback_callback_a1 , queue_size=1 )
         self.sub_a2         = rospy.Subscriber("a2/y", dsdm_actuator_sensor_feedback , self.feedback_callback_a2 , queue_size=1 )
         
-        # Timer
-        #self.timer          = rospy.Timer( rospy.Duration.from_sec(0.2),    self.timer_callback  )
+        # Param Timer
+        self.timer          = rospy.Timer( rospy.Duration.from_sec(2.0),    self.load_params  )
         
         # Load params
         self.load_params( None )

@@ -1,7 +1,7 @@
 # Parameters for ctc controller
 
 # Control mode type
-controller:     'RfixCTC'         #   RminCTC or RfixCTC or RminSLD or RfixSLD or RollCTC or RollSLD
+controller:     'RollSLD'         #   RminCTC or RfixCTC or RminSLD or RfixSLD or RollCTC or RollSLD
 fixed_mode:      0                #
 
 # Robot type
@@ -13,12 +13,13 @@ hysteresis:      true          # true or false hysteresis mode
 min_delay:       0.5           #
 
 # CTC only
-w0:              1.0
+w0:              10.0
+zeta:            0.7
 
 # Sliding only
 lam:             1.0
-nab:             1.0
-D:               1.0
+nab:             0.0
+D:               1.5
 
 # Roll Only
 horizon:         0.5           #
