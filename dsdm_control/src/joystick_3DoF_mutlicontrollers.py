@@ -3,7 +3,7 @@ import rospy
 import numpy as np
 from sensor_msgs.msg import Joy
 from std_msgs.msg    import Float64MultiArray, Bool, Int32
-from dsdm_msgs.msg   import dsdm_actuator_control_inputs
+from dsdm_msgs.msg   import dsdm_actuator_control_inputs, ctl_error
 
 from AlexRobotics.dynamic  import Prototypes             as Proto
 from AlexRobotics.control  import RminComputedTorque     as RminCTC
@@ -27,18 +27,31 @@ class Robot_controller(object):
         self.pub_a1u      = rospy.Publisher("a1/u", dsdm_actuator_control_inputs , queue_size=1  )
         self.pub_a2u      = rospy.Publisher("a2/u", dsdm_actuator_control_inputs , queue_size=1  )
         
+        self.pub_e        = rospy.Publisher("ctc_error", ctl_error               , queue_size=1  )
+        
         # Load ROS params
         self.load_params( None )
         
         # Operating Modes
         self.enable = False
         self.mode   = 0
-        self.modes  = [ 'open_loop ' , 'acceleration' , 'speed' , 'position' , 'custom1' , 'custom2' , 'custom3' ]
+        self.modes  = [ 'open_loop ' , 'acceleration' , 'speed' , 'position' , 'Auto Goal' , 'custom2' , 'custom3' ]
+        
+        # Fixed automatic goal
+        self.x_d = np.zeros( self.n )
         
         # Init DSDM msgs
         self.f = np.array([0.,0.,0.])
         self.k = np.array([1 ,1 ,1 ]) # High force mode
         self.n = np.array([0.,0.,0.])
+        
+        # Init error msgs for debug
+        self.setpoint  = 0
+        self.actual    = 0
+        self.e         = 0
+        self.de        = 0
+        self.debug     = True
+        self.debug_i   = 0
         
         # Sub message init
         self.joy = Joy()                 # memory for last joy msg
@@ -59,6 +72,7 @@ class Robot_controller(object):
         self.q_d   = np.zeros( self.R.dof )
         
         
+        
     ###########################################
     def load_params(self, event):
         """ Load param on ROS server """
@@ -67,6 +81,7 @@ class Robot_controller(object):
         self.robot_config   = rospy.get_param("robot_config",  'wrist-only'  )
         self.robot_ctl      = rospy.get_param("controller",  'RfixCTC'       )
         self.fixed_mode     = rospy.get_param("fixed_mode",  1               )
+        
         
         
         ###############################################
@@ -105,16 +120,34 @@ class Robot_controller(object):
             
         
         if self.robot_config == 'wrist-only':
-            self.Ctl.n_gears = 2
-            
-            self.Ctl.horizon   = 0.5
-            self.Ctl.hysteresis= True
-            self.Ctl.min_delay = 1.0
-            self.Ctl.sim_dt    = 0.1
-            
-            
+            self.Ctl.n_gears   = rospy.get_param("n_gears",  2  )
+            self.x_d            = np.array( rospy.get_param("n_gears",  [0,0]    ) )
+        
         elif self.robot_config == 'dual-plane' :
-            self.Ctl.n_gears = 4
+            self.Ctl.n_gears   = rospy.get_param("n_gears",  4  )
+            self.x_d            = np.array( rospy.get_param("n_gears",  [0,0,0,0]    ) )
+            
+        # Gen ctl params
+        self.Ctl.hysteresis = rospy.get_param("hysteresis",  True  )
+        self.Ctl.min_delay  = rospy.get_param("hysteresis",  0.5   )
+        
+        self.Ctl.w0         = rospy.get_param("w0",  1  )
+        
+        self.Ctl.lam        = rospy.get_param("lam",  1  )
+        self.Ctl.nab        = rospy.get_param("nab",  1  )
+        self.Ctl.D          = rospy.get_param("D",  0  )
+        
+        self.Ctl.horizon    = rospy.get_param("horizon",  0.5  )
+        self.Ctl.sim_dt     = rospy.get_param("hysteresis",  0.1  )
+        
+        # Base policy param for roll        
+        if self.robot_ctl == 'RollCTC' :
+            self.Ctl.FixCtl.lam   = self.Ctl.lam
+            
+        elif self.robot_ctl == 'RollSLD' :
+            self.Ctl.FixCtl.lam   = self.Ctl.lam 
+            self.Ctl.FixCtl.nab   = self.Ctl.nab 
+            self.Ctl.FixCtl.D     = self.Ctl.D
             
         
     #######################################   
@@ -241,6 +274,11 @@ class Robot_controller(object):
             self.k = self.kd
             self.n = self.nd
             
+            # Debug
+            if self.debug :
+                self.setpoint  = self.f[ self.debug_i ]
+                
+            
         #######################################
         # Closed Loop Acc
         elif ( self.mode == 1 ):
@@ -251,6 +289,10 @@ class Robot_controller(object):
             
             self.u2fkn( u ) # convert to actuator cmds
             
+            # Debug
+            if self.debug :
+                self.setpoint  = self.ddq_d[ self.debug_i ]
+                
             
         #######################################
         # Closed Loop Speed
@@ -261,6 +303,11 @@ class Robot_controller(object):
             u = self.Ctl.fixed_goal_ctl( x  , t )
             
             self.u2fkn( u ) # convert to actuator cmds
+            
+            # Debug
+            if self.debug :
+                self.setpoint  = self.dq_d[ self.debug_i ]
+                self.actual    = dq[ self.debug_i ]
             
             
         #######################################
@@ -273,18 +320,32 @@ class Robot_controller(object):
             
             self.u2fkn( u ) # convert to actuator cmds
             
+            # Debug
+            if self.debug :
+                self.setpoint  = self.q_d[ self.debug_i ]
+                self.actual    = q[ self.debug_i ]
+            
             
         #######################################
         # Custom 1
         elif ( self.mode == 4 ):
             
-            print x
+            self.Ctl.goal = self.x_d # fixed goal set by params
+            
+            u = self.Ctl.fixed_goal_ctl( x  , t )
+            
+            self.u2fkn( u ) # convert to actuator cmds
+            
+            # Debug
+            if self.debug :
+                self.setpoint  = self.x_d[ self.debug_i * 2 ]
+                self.actual    = q[ self.debug_i ]
             
         #######################################
         # Custom 2
         elif ( self.mode == 5 ):
             
-            pass
+            print x
             
         #######################################
         # Custom 3
@@ -303,6 +364,10 @@ class Robot_controller(object):
         
         
         self.pub_u_msg()
+        
+        if self.debug :
+            
+            self.pub_e_msg()
         
         if self.verbose:
             
@@ -400,6 +465,20 @@ class Robot_controller(object):
         self.pub_a0u.publish( msg0 )
         self.pub_a1u.publish( msg1 )
         self.pub_a2u.publish( msg2 )
+        
+        
+    #######################################   
+    def pub_e_msg( self ):
+        """ Publish error data """
+
+        msg              = ctl_error()
+        msg.header.stamp = rospy.Time.now()
+        msg.set_point    = self.setpoint
+        msg.actual       = self.actual
+        msg.e            = self.e 
+        msg.de           = self.de 
+        
+        self.pub_e.publish( msg )
         
 
 
