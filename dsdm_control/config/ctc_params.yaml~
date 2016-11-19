@@ -1,11 +1,26 @@
-# Parameters for DSDM actuator controller node
+# Parameters for ctc controller
 
+# Control mode type
+controller:     'RfixCTC'         #   RminCTC or RfixCTC or RminSLD or RfixSLD or RollCTC or RollSLD
+fixed_mode:      0                #
 
-robot_type:     'BoeingArm'       # 
-robot_config:   'wrist-only'      #
-controller:     'RfixSLD'         #   RminCTC or RfixCTC or RminSLD or RfixSLD or RollCTC or RollSLD
-fixed_mode:      1                #
-a0_zero:         0.05             # zero value of actuator 0
-a1_zero:         0.0              # zero value of actuator 1
-a2_zero:         0.0              # zero value of actuator 2
+# Robot type
+n_gears:         2             # number of possible gear selection
+goal:           [0,0]          # target state
 
+# General 
+hysteresis:      true          # true or false hysteresis mode
+min_delay:       0.5           #
+
+# CTC only
+w0:              1.0
+zeta:            0.7
+
+# Sliding only
+lam:             1.0
+nab:             1.0
+D:               1.0
+
+# Roll Only
+horizon:         0.5           #
+sim_dt:          0.1           #

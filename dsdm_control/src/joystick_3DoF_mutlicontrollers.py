@@ -133,13 +133,14 @@ class Robot_controller(object):
         self.Ctl.min_delay  = rospy.get_param("hysteresis",  0.5   )
         
         self.Ctl.w0         = rospy.get_param("w0",  1  )
+        self.Ctl.w0         = rospy.get_param("w0",  0.7  )
         
         self.Ctl.lam        = rospy.get_param("lam",  1  )
         self.Ctl.nab        = rospy.get_param("nab",  1  )
         self.Ctl.D          = rospy.get_param("D",  0  )
         
         self.Ctl.horizon    = rospy.get_param("horizon",  0.5  )
-        self.Ctl.sim_dt     = rospy.get_param("hysteresis",  0.1  )
+        self.Ctl.sim_dt     = rospy.get_param("sim_dt",  0.1  )
         
         # Base policy param for roll        
         if self.robot_ctl == 'RollCTC' :
@@ -342,7 +343,8 @@ class Robot_controller(object):
             # Debug
             if self.debug :
                 self.setpoint  = self.x_d[ self.debug_i * 2 ]
-                self.actual    = q[ self.debug_i ]
+                #self.actual    = q[ self.debug_i ]
+                self.actual    = q
             
         #######################################
         # Custom 2
