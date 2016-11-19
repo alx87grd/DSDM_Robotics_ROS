@@ -27,7 +27,7 @@ class Robot_controller(object):
         self.pub_a1u      = rospy.Publisher("a1/u", dsdm_actuator_control_inputs , queue_size=1  )
         self.pub_a2u      = rospy.Publisher("a2/u", dsdm_actuator_control_inputs , queue_size=1  )
         
-        self.pub_e        = rospy.Publisher("ctc_error", ctl_error               , queue_size=1  )
+        self.pub_e        = rospy.Publisher("ctl_error", ctl_error               , queue_size=1  )
         
         # Load ROS params
         self.load_params( None )
@@ -38,7 +38,7 @@ class Robot_controller(object):
         self.modes  = [ 'open_loop ' , 'acceleration' , 'speed' , 'position' , 'Auto Goal' , 'custom2' , 'custom3' ]
         
         # Fixed automatic goal
-        self.x_d = np.zeros( self.n )
+        self.x_d = np.zeros( self.R.n )
         
         # Init DSDM msgs
         self.f = np.array([0.,0.,0.])
@@ -50,6 +50,7 @@ class Robot_controller(object):
         self.actual    = 0
         self.e         = 0
         self.de        = 0
+        self.cmd       = 0
         self.debug     = True
         self.debug_i   = 0
         
@@ -366,7 +367,7 @@ class Robot_controller(object):
         self.pub_u_msg()
         
         if self.debug :
-            
+            self.cmd  = self.f[ self.debug_i ]
             self.pub_e_msg()
         
         if self.verbose:
@@ -476,7 +477,8 @@ class Robot_controller(object):
         msg.set_point    = self.setpoint
         msg.actual       = self.actual
         msg.e            = self.e 
-        msg.de           = self.de 
+        msg.de           = self.de
+        msg.cmd          = self.cmd
         
         self.pub_e.publish( msg )
         
