@@ -1,7 +1,7 @@
 # Parameters for ctc controller
 
 # Control mode type
-controller:     'RollSLD'         #   RminCTC or RfixCTC or RminSLD or RfixSLD or RollCTC or RollSLD
+controller:     'RfixCTC'         #   RminCTC or RfixCTC or RminSLD or RfixSLD or RollCTC or RollSLD
 fixed_mode:      0                #
 
 # Robot type
@@ -24,3 +24,4 @@ D:               1.5
 # Roll Only
 horizon:         0.5           #
 sim_dt:          0.1           #
+domain_check:    true
