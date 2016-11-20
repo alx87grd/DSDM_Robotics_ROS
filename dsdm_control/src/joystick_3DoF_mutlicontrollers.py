@@ -37,9 +37,6 @@ class Robot_controller(object):
         self.mode   = 0
         self.modes  = [ 'open_loop ' , 'acceleration' , 'speed' , 'position' , 'Auto Goal' , 'custom2' , 'custom3' ]
         
-        # Fixed automatic goal
-        self.x_d = np.zeros( self.R.n )
-        
         # Init DSDM msgs
         self.f = np.array([0.,0.,0.])
         self.k = np.array([1 ,1 ,1 ]) # High force mode
@@ -122,18 +119,19 @@ class Robot_controller(object):
         
         if self.robot_config == 'wrist-only':
             self.Ctl.n_gears   = rospy.get_param("n_gears",  2  )
-            self.x_d            = np.array( rospy.get_param("n_gears",  [0,0]    ) )
+            self.x_d            = np.array( rospy.get_param("goal",  [0,0]    ) )
         
         elif self.robot_config == 'dual-plane' :
             self.Ctl.n_gears   = rospy.get_param("n_gears",  4  )
-            self.x_d            = np.array( rospy.get_param("n_gears",  [0,0,0,0]    ) )
+            self.x_d           = np.array( rospy.get_param("goal",  [0.0,0.0,0.0,0.0]    ) )
+            #self.x_d           = np.array( [-3.14 , 0 , 0 , 0] )
             
         # Gen ctl params
         self.Ctl.hysteresis = rospy.get_param("hysteresis",  True  )
-        self.Ctl.min_delay  = rospy.get_param("hysteresis",  0.5   )
+        self.Ctl.min_delay  = rospy.get_param("min_delay",  0.5   )
         
         self.Ctl.w0         = rospy.get_param("w0",  1  )
-        self.Ctl.w0         = rospy.get_param("w0",  0.7  )
+        self.Ctl.zeta       = rospy.get_param("zeta",  0.7  )
         
         self.Ctl.lam        = rospy.get_param("lam",  1  )
         self.Ctl.nab        = rospy.get_param("nab",  1  )
@@ -191,6 +189,7 @@ class Robot_controller(object):
         ############################################
         # update setpoints for the possible modes
                 
+
         """ Open Loop Setpoints """
         
         """ Ball screw DoF """
@@ -212,6 +211,7 @@ class Robot_controller(object):
         self.fd[2] = self.joy.axes[4] * 0.2
         self.kd[2] = not( self.joy.buttons[1] )
         self.nd[2] = self.joy.axes[3] * 0.5
+
         
         ###################
         
@@ -266,6 +266,7 @@ class Robot_controller(object):
         [ q , dq ]    = self.R.x2q( self.x  )
         
         # Get time
+
         t_ros = rospy.get_rostime() - self.t_zero
         t     = t_ros.to_sec()
         
@@ -307,18 +308,20 @@ class Robot_controller(object):
             u = self.Ctl.fixed_goal_ctl( x  , t )
             
             self.u2fkn( u ) # convert to actuator cmds
+
             
             # Debug
             if self.debug :
                 self.setpoint  = self.dq_d[ self.debug_i ]
-                #self.actual    = dq[ self.debug_i ]
-                self.actual    = dq
+                self.actual    = dq[ self.debug_i ]
+                #self.actual    = dq
             
             
         #######################################
         # Closed Loop Position
         elif ( self.mode == 3 ):
             
+
             self.Ctl.goal = self.R.q2x( self.q_d , np.zeros( self.R.dof ) )
             
             u = self.Ctl.fixed_goal_ctl( x  , t )
@@ -328,15 +331,15 @@ class Robot_controller(object):
             # Debug
             if self.debug :
                 self.setpoint  = self.q_d[ self.debug_i ]
-                #self.actual    = q[ self.debug_i ]
-                self.actual    = q
+                self.actual    = q[ self.debug_i ]
+                #self.actual    = q
             
             
         #######################################
         # Custom 1
         elif ( self.mode == 4 ):
             
-            self.Ctl.goal = self.x_d # fixed goal set by params
+            self.Ctl.goal = self.x_d.copy() # fixed goal set by params
             
             u = self.Ctl.fixed_goal_ctl( x  , t )
             
@@ -344,9 +347,11 @@ class Robot_controller(object):
             
             # Debug
             if self.debug :
+                
+                print self.Ctl.q_e , q , u
                 self.setpoint  = self.x_d[ self.debug_i * 2 ]
-                #self.actual    = q[ self.debug_i ]
-                self.actual    = q
+                self.actual    = q[ self.debug_i ]
+                #self.actual    = q
             
         #######################################
         # Custom 2
@@ -358,7 +363,7 @@ class Robot_controller(object):
         # Custom 3
         elif ( self.mode == 6 ):
             
-            pass
+            print self.x_d
         
         
         #######################################
@@ -385,6 +390,7 @@ class Robot_controller(object):
     def u2fkn( self , u ):
         """ Convert input array into individual actuator commands """
         
+
         self.f = np.array([0.,0.,0.])
         self.k = np.array([1 ,1 ,1 ]) # High force mode
         self.n = np.array([0.,0.,0.])
@@ -412,6 +418,7 @@ class Robot_controller(object):
             self.f[2] = u[1]
             self.n[2] = 0
             
+
             """ Dsicrete mode """
             if u[2] == 0 :
                 self.k[1] = 0
@@ -430,6 +437,7 @@ class Robot_controller(object):
                 self.k[2] = 1
             
         
+
         
         
         
@@ -439,6 +447,7 @@ class Robot_controller(object):
         
         msg0 = dsdm_actuator_control_inputs()
         msg1 = dsdm_actuator_control_inputs()
+
         msg2 = dsdm_actuator_control_inputs()
         
         # Load data only if enabled
@@ -480,11 +489,11 @@ class Robot_controller(object):
 
         msg              = ctl_error()
         msg.header.stamp = rospy.Time.now()
-        msg.set_point    = self.setpoint
-        msg.actual       = self.actual
-        msg.e            = self.e 
-        msg.de           = self.de
-        msg.cmd          = self.cmd
+        msg.set_point    = self.setpoint + 0.0
+        msg.actual       = self.actual + 0.0 
+        msg.e            = self.e + 0.0 
+        msg.de           = self.de + 0.0
+        msg.cmd          = self.cmd + 0.0
         
         self.pub_e.publish( msg )
         
