@@ -350,13 +350,8 @@ class Robot_controller(object):
                 
                 print self.Ctl.q_e , q , u
                 self.setpoint  = self.x_d[ self.debug_i * 2 ]
-<<<<<<< HEAD
                 self.actual    = q[ self.debug_i ]
                 #self.actual    = q
-=======
-                #self.actual    = q[ self.debug_i ]
-                self.actual    = q
->>>>>>> 5b01165ec4033a5d24e8c9ef077fa792e95bc21e
             
         #######################################
         # Custom 2
