@@ -18,10 +18,10 @@ zeta:            0.7
 
 # Sliding only
 lam:             1.0
-nab:             0.0
-D:               2.0
+nab:             1.0
+D:               1.0
 
 # Roll Only
 horizon:         0.2           #
 sim_dt:          0.1           #
-domain_check:    false 
+domain_check:    true
