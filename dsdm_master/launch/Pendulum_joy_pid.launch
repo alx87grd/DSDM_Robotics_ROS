@@ -6,9 +6,7 @@
 	<node pkg="dsdm_actuator" type="joy_stick_dsdm_pid.py" name="PID" output="screen">
         </node>
 
-	<group ns="a0">
-		<include file="$(find dsdm_actuator)/launch/actuator_a1.launch"/>
-	</group>
+	<include file="$(find dsdm_actuator)/launch/actuator.launch"/>
 
 	<rosparam command="load" file="$(find dsdm_master)/config/Pendulum.yaml"/>
 
