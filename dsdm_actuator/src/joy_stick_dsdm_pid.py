@@ -172,6 +172,7 @@ class dsdm_pid(object):
         # Reset Integral Error is mode changed
         if not( self.last_mode == self.mode ):
             
+            print 'Control Mode Updated'
             self.e_sum = 0
             
         self.last_mode = self.mode

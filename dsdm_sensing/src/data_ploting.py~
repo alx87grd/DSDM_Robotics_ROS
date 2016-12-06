@@ -10,17 +10,23 @@ import matplotlib.pyplot as plt
 
 ## LOADING
 
-
+<<<<<<< HEAD
 name      = '1dof_loaded_D15'
-
+=======
+name      = 'succes5+'
+>>>>>>> full-robot-dev
 name      = '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_sensing/data/' + name + '.npy'
 
 DATA = np.load( name )
 
+<<<<<<< HEAD
 i = 1 + 500 * 4
 j = 1 + 500 * 9
+
+=======
 i = 1 + 500 * 1.470
 j = i + 500 * 4
+>>>>>>> full-robot-dev
 
 ## DEOCODING
 q  = DATA[i:j,0]

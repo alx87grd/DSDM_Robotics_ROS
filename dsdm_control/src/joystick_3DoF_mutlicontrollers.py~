@@ -377,10 +377,13 @@ class Robot_controller(object):
         
         self.pub_u_msg()
         
+<<<<<<< HEAD
         if self.debug :
             self.cmd  = self.f[ self.debug_i ]
             self.pub_e_msg()
         
+=======
+>>>>>>> full-robot-dev
         if self.verbose:
             
             print( 'Ctrl mode: ', self.k , ' Set point: ', self.f )
@@ -390,6 +393,10 @@ class Robot_controller(object):
     def u2fkn( self , u ):
         """ Convert input array into individual actuator commands """
         
+<<<<<<< HEAD
+
+=======
+>>>>>>> full-robot-dev
         self.f = np.array([0.,0.,0.])
         self.k = np.array([1 ,1 ,1 ]) # High force mode
         self.n = np.array([0.,0.,0.])
@@ -417,7 +424,10 @@ class Robot_controller(object):
             self.f[2] = u[1]
             self.n[2] = 0
             
+<<<<<<< HEAD
 
+=======
+>>>>>>> full-robot-dev
             """ Dsicrete mode """
             if u[2] == 0 :
                 self.k[1] = 0
@@ -435,7 +445,12 @@ class Robot_controller(object):
                 self.k[1] = 1
                 self.k[2] = 1
             
-       
+        
+<<<<<<< HEAD
+
+=======
+>>>>>>> full-robot-dev
+        
         
         
     #######################################   
@@ -444,6 +459,10 @@ class Robot_controller(object):
         
         msg0 = dsdm_actuator_control_inputs()
         msg1 = dsdm_actuator_control_inputs()
+<<<<<<< HEAD
+
+=======
+>>>>>>> full-robot-dev
         msg2 = dsdm_actuator_control_inputs()
         
         # Load data only if enabled
@@ -478,6 +497,8 @@ class Robot_controller(object):
         self.pub_a1u.publish( msg1 )
         self.pub_a2u.publish( msg2 )
         
+<<<<<<< HEAD
+        
     #######################################   
     def pub_e_msg( self ):
         """ Publish error data """
@@ -491,7 +512,9 @@ class Robot_controller(object):
         msg.cmd          = self.cmd + 0.0
         
         self.pub_e.publish( msg )
-
+        
+=======
+>>>>>>> full-robot-dev
 
 
 #########################################
