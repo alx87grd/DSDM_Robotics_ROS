@@ -11,6 +11,7 @@ from dsdm_msgs.msg import dsdm_actuator_sensor_feedback
 from std_msgs.msg  import Float64MultiArray
 
 from AlexRobotics.dynamic  import CustomManipulator    as CM
+from AlexRobotics.dynamic  import Prototypes           as Proto
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -41,8 +42,8 @@ class DSDM_OBS(object):
         self.sub_a1         = rospy.Subscriber("a1/y", dsdm_actuator_sensor_feedback , self.feedback_callback_a1 , queue_size=1 )
         self.sub_a2         = rospy.Subscriber("a2/y", dsdm_actuator_sensor_feedback , self.feedback_callback_a2 , queue_size=1 )
         
-        # Timer
-        #self.timer          = rospy.Timer( rospy.Duration.from_sec(0.2),    self.timer_callback  )
+        # Param Timer
+        self.timer          = rospy.Timer( rospy.Duration.from_sec(2.0),    self.load_params  )
         
         # Load params
         self.load_params( None )
@@ -67,11 +68,31 @@ class DSDM_OBS(object):
         if self.plot:
             self.R.show_3D( self.q )
             
+            
+        # Partial Manipulator
+        self.plot_partial_config = True
+        
+        if self.plot_partial_config :
+            
+            if self.robot_config == 'wrist-only':
+                self.Rp = Proto.SingleRevoluteDSDM()
+                self.qp = np.array( [ 0 ] )
+                
+            elif self.robot_config == 'dual-plane' :
+                self.Rp = Proto.TwoPlanarSerialDSDM()
+                self.qp = np.array( [ 0 , 0 ] )
+                
+            self.Rp.show( self.qp )
+            
+            
+        
+            
     ###########################################
     def load_params(self, event):
         """ Load param on ROS server """
         
         self.robot_type     = rospy.get_param("robot_type",  'BoeingArm'  )
+        self.robot_config   = rospy.get_param("robot_config",  'wrist-only'  )
         a0_zero             = rospy.get_param("a0_zero",  0.05 )
         a1_zero             = rospy.get_param("a1_zero",  0.00 )
         a2_zero             = rospy.get_param("a2_zero",  0.00 )
@@ -98,6 +119,14 @@ class DSDM_OBS(object):
         self.dq    = self.R.da2dq( self.da , self.q )
         self.x_hat = self.R.q2x( self.q , self.dq   )  
         
+        if self.plot_partial_config :
+            if self.robot_config == 'wrist-only':
+                self.qp = np.array( [ self.q[2] ] )
+                
+            elif self.robot_config == 'dual-plane' :
+                self.qp = np.array( [ self.q[1] , self.q[2]  ] )
+            
+        
         
     ###################################
     def plot_update_callback(self , event ):
@@ -106,6 +135,9 @@ class DSDM_OBS(object):
         # Update graphic
         if self.plot:
             self.R.update_show_3D( self.q )
+            
+            if self.plot_partial_config :
+                self.Rp.update_show( self.qp  )
     
     #######################################   
     def pub_state_estimate( self ):
@@ -141,6 +173,8 @@ class DSDM_OBS(object):
         
         self.a[2]  = msg.a
         self.da[2] = msg.da
+        
+        
         
         
         

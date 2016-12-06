@@ -23,6 +23,7 @@ class nav(object):
         # Init DSDM msgs
         self.f = np.array([0.,0.,0.])
         self.k = np.array([1,1,1]) # High force mode
+        self.n = np.array([0.,0.,0.])
         
     #######################################   
     def joy_callback( self, msg ):
@@ -50,11 +51,21 @@ class nav(object):
                 
             """ Shoulder """
             
+            self.f[1] = msg.axes[1] * 0.2
+            self.k[1] = not( msg.buttons[0] )
+            self.n[1] = msg.axes[0] * 0.5
+            
             """ Elbow """
+            
+            self.f[2] = msg.axes[4] * 0.2
+            self.k[2] = not( msg.buttons[1] )
+            self.n[2] = msg.axes[3] * 0.5
+            
                 
         else:
             self.f = np.array([0.,0.,0.])
             self.k = np.array([1,1,1])
+            self.n = np.array([0.,0.,0.])
         ###########################
         
         
@@ -78,9 +89,11 @@ class nav(object):
         
         msg1.f = self.f[1]
         msg1.k = self.k[1]
+        msg1.n = self.n[1]
         
         msg2.f = self.f[2]
         msg2.k = self.k[2]
+        msg2.n = self.n[2]
         
         self.pub_a0u.publish( msg0 )
         self.pub_a1u.publish( msg1 )

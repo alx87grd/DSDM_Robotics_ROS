@@ -9,15 +9,49 @@ import matplotlib.pyplot as plt
 
 
 ## LOADING
+path      = '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_sensing/data/' 
 
-name      = '1dof_loaded_D15'
-name      = '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_sensing/data/' + name + '.npy'
+r = 1
 
-DATA = np.load( name )
+if r == 1 :
 
-i = 1 + 500 * 4
-j = 1 + 500 * 9
+    name      = '1dof_unloaded_D1'
+    
+    i = 1 + 500 * 6.40
+    j = i + 500 * 4.8
+    
+    yaxis = True
+    
+elif r == 2:
+    
+    name      = '1dof_loaded_D1'
+    i = 1 + 500 * 3.95
+    j = i + 500 * 4.8
+    
+    yaxis = False
+    
+elif r == 3:
+    
+    name      = '1dof_unloaded_D15'
 
+    i = 1 + 500 * 14.95
+    j = i + 500 * 4.8
+    
+    yaxis = False
+    
+elif r == 4:
+    
+    name      = '1dof_loaded_D15'
+
+    i = 1 + 500 * 4.2
+    j = i + 500 * 4.8
+    
+    yaxis = False
+    
+
+#i = 1 + 500 * 3.95
+#j = i + 500 * 4.8
+DATA = np.load( path + name + '.npy' )
 
 ## DEOCODING
 q  = DATA[i:j,0]
@@ -36,18 +70,24 @@ id2= DATA[i:j,12]
 wr1= DATA[i:j,13] 
 wr2= DATA[i:j,14]
 
+save = True
+
 
 ## Figures
 
-def plot_main():
+def plot_main( ylabel = True ):
 
     fontsize = 5
     
     matplotlib.rc('xtick', labelsize=fontsize )
     matplotlib.rc('ytick', labelsize=fontsize )
     
+    if ylabel:
+        w = 1.5
+    else:
+        w = 1.35
     
-    simfig , plot = plt.subplots(4, sharex=True,figsize=(5, 3),dpi=400, frameon=True)
+    simfig , plot = plt.subplots(4, sharex=True,figsize=( w , 3),dpi=600, frameon=True)
     
     simfig.canvas.set_window_title('Closed loop trajectory')
     
@@ -57,8 +97,8 @@ def plot_main():
     plot[0].set_ylim(-5,1)
     plot[0].grid(True)
     plot[0].set_ylim(-6,1)
-    legend = plot[0].legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
-    legend.get_frame().set_alpha(0.4)
+    #legend = plot[0].legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
+    #legend.get_frame().set_alpha(0.4)
     
     plot[1].plot( t ,  dq , 'b')
     plot[1].set_yticks([-6,0,6])
@@ -75,13 +115,16 @@ def plot_main():
     plot[3].set_ylim(-100,600)
     plot[3].grid(True)
     
-    plot[0].set_ylabel('Angle [rad]' , fontsize=fontsize )
-    plot[1].set_ylabel('Speed [rad/sec]' , fontsize=fontsize )
-    plot[2].set_ylabel('Torque [Nm]' , fontsize=fontsize )
-    plot[3].set_ylabel('Gear Ratio' , fontsize=fontsize )
+    if ylabel:
+    
+        plot[0].set_ylabel('Angle \n [rad]' , fontsize=fontsize )
+        plot[1].set_ylabel('Speed \n [rad/sec]' , fontsize=fontsize )
+        plot[2].set_ylabel('Torque \n [Nm]' , fontsize=fontsize )
+        plot[3].set_ylabel('Gear Ratio' , fontsize=fontsize )
     
     plot[-1].set_xlabel('Time [sec]', fontsize=fontsize )
-    #plot[-1].set_xlim(0,4)
+    plot[-1].set_xlim(0,5)
+    plot[-1].set_xticks([0,2,4])
     
     #plot[-1].set_xticks([0.65,1.16,1.39,2.63])
     #plot[-1].set_xticks([0,1,2,3,4])
@@ -89,6 +132,9 @@ def plot_main():
     simfig.tight_layout()
     
     simfig.show()
+    
+    simfig.savefig( path + name + '.pdf' )
+    simfig.savefig( path + name + '.png' )
     
 
 def plot_motors():
@@ -196,9 +242,14 @@ def plot_currents():
     
     simfig.show()
     
+
+
+#plot_main()
     
-    
-plot_main()
+plot_main( yaxis )
+
+
 #plot_motors()
 #plot_currents()
 #plot_shift_delay()
+
