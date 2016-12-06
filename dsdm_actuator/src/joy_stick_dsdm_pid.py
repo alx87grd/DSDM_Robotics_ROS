@@ -15,7 +15,7 @@ class dsdm_pid(object):
         self.verbose = False
         
         # Publishers
-        self.pub_u              = rospy.Publisher("a0/u", dsdm_actuator_control_inputs , queue_size=1  )
+        self.pub_u              = rospy.Publisher("a2/u", dsdm_actuator_control_inputs , queue_size=1  )
         self.pub_e              = rospy.Publisher("pid_error", ctl_error               , queue_size=1  )
         
         # Suscribers
