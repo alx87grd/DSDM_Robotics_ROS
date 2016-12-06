@@ -212,8 +212,8 @@ class dsdm_pid(object):
         
         self.x = msg.data
         
-        self.a  = self.x[0]
-        self.da = self.x[3]
+        self.a  = self.x[2]
+        self.da = self.x[5]
         
         self.callback( None )
         

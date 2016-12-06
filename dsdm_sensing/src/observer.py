@@ -158,7 +158,7 @@ class DSDM_OBS(object):
         self.da[0] = msg.da
         
         # Evante based timing
-        self.main_callback()
+        #self.main_callback()
         
     ###################################
     def feedback_callback_a1(self, msg ):
@@ -173,6 +173,9 @@ class DSDM_OBS(object):
         
         self.a[2]  = msg.a
         self.da[2] = msg.da
+        
+        # Evante based timing
+        self.main_callback()
         
         
         

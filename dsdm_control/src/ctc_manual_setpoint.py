@@ -31,7 +31,7 @@ class CTC_controller(object):
         
         # Pub
         #self.pub_control        = rospy.Publisher("u", dsdm_robot_control_inputs , queue_size=1   )     
-        self.pub_control        = rospy.Publisher("a0/u", dsdm_actuator_control_inputs , queue_size=1   )  # Temp for testing, only one actuator
+        self.pub_control        = rospy.Publisher("a2/u", dsdm_actuator_control_inputs , queue_size=1   )  # Temp for testing, only one actuator
         #self.pub_control        = rospy.Publisher("CTC_U", dsdm_actuator_control_inputs , queue_size=1   ) 
         self.pub_e              = rospy.Publisher("ctc_error", ctl_error               , queue_size=1  )
         
