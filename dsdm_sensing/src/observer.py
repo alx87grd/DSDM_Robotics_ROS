@@ -50,13 +50,16 @@ class DSDM_OBS(object):
         
         # Load robot params
         if self.robot_type == 'BoeingArm':
-            self.R       = CM.BoeingArm()
+            self.R                   = CM.BoeingArm()
+            self.plot_partial_config = True
             
         elif self.robot_type == 'pendulum':
-            self.R       = CM.TestPendulum()
+            self.R                   = CM.TestPendulum()
+            self.plot_partial_config = False
         
         else:
             print 'Error loading robot type'
+            self.plot_partial_config = False
 
         # Variable Init
         self.a      = np.zeros( self.R.dof )       
@@ -70,7 +73,6 @@ class DSDM_OBS(object):
             
             
         # Partial Manipulator
-        self.plot_partial_config = True
         
         if self.plot_partial_config :
             

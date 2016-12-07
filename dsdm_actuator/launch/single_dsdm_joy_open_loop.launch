@@ -6,6 +6,6 @@
 	<node pkg="dsdm_actuator" type="joy_stick_dsdm_openloop.py" name="nav" output="screen">
         </node>
 
-	<include file="$(find dsdm_actuator)/launch/actuator_a2_alone.launch"/>
+	<include file="$(find dsdm_actuator)/launch/actuator.launch"/>
 	
  </launch>

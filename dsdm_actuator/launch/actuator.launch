@@ -1,5 +1,6 @@
 <launch>
-	<group ns="a0">
+	<group ns="a2">
+
 		<!-- Gen for single actuator, default is rev elbow -->
 		<rosparam command="load" file="$(find dsdm_actuator)/config/a2.yaml"/>
 

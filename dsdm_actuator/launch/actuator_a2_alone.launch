@@ -7,13 +7,13 @@
 
 	
 	 	<group ns="M1">
-			<rosparam command="load" file="$(find dsdm_actuator)/config/a0m1.yaml"/>
+			<rosparam command="load" file="$(find dsdm_actuator)/config/m1.yaml"/>
 			<node pkg="flexsea_execute" type="flexsea_execute_node" name="execute" output="screen">
 			</node>
 	 	</group>
 
 		<group ns="M2">
-			<rosparam command="load" file="$(find dsdm_actuator)/config/a0m2.yaml"/>
+			<rosparam command="load" file="$(find dsdm_actuator)/config/m2.yaml"/>
 			<node pkg="flexsea_execute" type="flexsea_execute_node" name="execute" output="screen">
 			</node>
 	 	</group>

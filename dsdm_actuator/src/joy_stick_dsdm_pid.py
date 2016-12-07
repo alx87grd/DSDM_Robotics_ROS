@@ -3,7 +3,7 @@ import rospy
 import numpy as np
 from std_msgs.msg    import Float64MultiArray
 from sensor_msgs.msg import Joy
-from dsdm_msgs.msg   import dsdm_actuator_control_inputs, ctl_error
+from dsdm_msgs.msg   import dsdm_actuator_control_inputs, dsdm_actuator_sensor_feedback, ctl_error
 
 #########################################
 class dsdm_pid(object):
@@ -20,7 +20,9 @@ class dsdm_pid(object):
         
         # Suscribers
         self.sub_joy            = rospy.Subscriber("joy", Joy , self.joy_callback , queue_size=1       )
-        self.sub_state_feedback = rospy.Subscriber("x_hat", Float64MultiArray , self.update_state ,  queue_size=1      )
+        #self.sub_state_feedback = rospy.Subscriber("x_hat", Float64MultiArray , self.update_state ,  queue_size=1      )
+        self.sub_a2         = rospy.Subscriber("a2/y", dsdm_actuator_sensor_feedback , self.feedback_callback , queue_size=1 )
+        
         
         # Init DSDM msg
         self.f  = 0
@@ -40,6 +42,7 @@ class dsdm_pid(object):
         self.e               = 0
         self.de              = 0
         self.set_point       = 0
+        self.cmd             = 0
         self.actual          = 0
         self.n               = 0
         self.n_d             = 0  # Nullspace setpoint
@@ -49,10 +52,17 @@ class dsdm_pid(object):
         self.mode      = 'PWM'
         #self.mode      = 'PID_position'
         #self.mode      = 'PID_speed'
-        self.last_mode = self.mode
         self.e_sum     = 0
-        self.gain      = np.array([ 0.2 , 0.05 , 0.2 ])
+        self.gain_HS_P = np.array([ 0.6 , 0.1 , 0.0 ])
+        self.gain_HF_P = np.array([ 0.4 , 0.1 , 0.0 ])
+        self.gain_HS_S = np.array([ 0.1 , 0.05 , 0.0 ])
+        self.gain_HF_S = np.array([ 0.2 , 0.1 , 0.0 ])
+        self.e_sum_r   = 7    # ratio of equivalence of integral action between modes
         self.dt        = 0.02  # assuming 500 HZ
+        
+        # Init hysteresis
+        self.last_mode = self.mode
+        self.last_k    = 0
         
     
     #######################################   
@@ -63,29 +73,34 @@ class dsdm_pid(object):
             
             # OPENLOOP
             if self.mode == 'PWM' :
+                
                 # Pick set_point with joysticks gain
-                self.f  =    self.joy_msg.axes[1] * 0.2
-                    
-                # Pick mode with trigger
-                if ( self.joy_msg.axes[5] < 0):
-                    self.k = 0
-                else:
-                    self.k = 1
-                    
-                self.e_sum = 0 # Reset integral error
+                self.f     =    self.joy_msg.axes[1] * 0.2
+
+                #FOr debug
+                self.cmd = self.f
+            
                         
             
             # PID Position
             elif self.mode == 'PID_position' :
                 
+                 #  Pick gains
+                if ( self.k == 0):
+                    kp = self.gain_HS_P[0]
+                    ki = self.gain_HS_P[1]
+                    kd = self.gain_HS_P[2]
+                else:
+                    kp = self.gain_HF_P[0]
+                    ki = self.gain_HF_P[1]
+                    kd = self.gain_HF_P[2]
+                    
+                # Torque
+                
                 e  = self.set_point - self.a
                 de = 0              - self.da
                 
                 self.e_sum = self.e_sum + e * self.dt
-                
-                kp = self.gain[0]
-                ki = self.gain[1]
-                kd = self.gain[2]
                 
                 cmd = kp * e + kd * de + ki * self.e_sum
                 
@@ -95,24 +110,29 @@ class dsdm_pid(object):
                 self.actual = self.a
                 self.e      = e
                 self.de     = de
+                self.cmd    = self.f
                 
-                #  Pick mode with trigger
-                if ( self.joy_msg.axes[5] < 0):
-                    self.k = 0
-                else:
-                    self.k = 1
+                
                     
             # PID Position
             elif self.mode == 'PID_speed' :
+                
+                #  Pick gains
+                if ( self.k == 0 ):
+                    kp = self.gain_HS_S[0]
+                    ki = self.gain_HS_S[1]
+                    kd = self.gain_HS_S[2]
+                else:
+                    kp = self.gain_HF_S[0]
+                    ki = self.gain_HF_S[1]
+                    kd = self.gain_HF_S[2]
+                    
+                # Torque
                 
                 e  = self.set_point - self.da
                 de = 0
                 
                 self.e_sum = self.e_sum + e * self.dt
-                
-                kp = self.gain[0]
-                ki = self.gain[1]
-                kd = self.gain[2]
                 
                 cmd = kp * e + kd * de + ki * self.e_sum
                 
@@ -122,12 +142,8 @@ class dsdm_pid(object):
                 self.actual = self.da
                 self.e      = e
                 self.de     = de
+                self.cmd    = self.f
                 
-                #  Pick mode with trigger
-                if ( self.joy_msg.axes[5] < 0):
-                    self.k = 0
-                else:
-                    self.k = 1
                     
             # Nullspace Target
             self.n = self.n_d
@@ -152,30 +168,50 @@ class dsdm_pid(object):
         
         self.n_d                 = msg.axes[4] 
         
+        # Pick mode with trigger
+        if ( self.joy_msg.axes[5] < 0):
+            self.k = 0
+        else:
+            self.k = 1
+        
         # Pick ctrl_mode with button state
         if ( msg.buttons[0] == 1 ):
             self.enable = True
         else:
             self.enable = False
+            self.e_sum  = 0 # Reset integral error
             
         # Pick ctrl_mode with button state
-        #    Default
-        self.mode == 'PWM'
+        self.mode = 'PWM' #    Default
             
         if ( msg.buttons[1] == 1 ):
             self.mode   = 'PID_position'
         elif ( msg.buttons[2] == 1 ):
             self.mode   = 'PID_speed'
         else:
-            self.mode == 'PWM'
+            self.mode = 'PWM'
+            self.e_sum  = 0 # Reset integral error
             
         # Reset Integral Error is mode changed
         if not( self.last_mode == self.mode ):
             
-            print 'Control Mode Updated'
+            print 'Control Mode Updated to: ' + self.mode
             self.e_sum = 0
             
+        # Equivalence of integral action between modes
+            
+        # Mode changed
+        if not( self.last_k == self.k):
+            # HF --> HS
+            if (self.k == 0 ):
+                self.e_sum = self.e_sum * self.e_sum_r
+                
+            elif (self.k ==1 ):
+                self.e_sum = self.e_sum * ( 1.0 / self.e_sum_r )
+            
+            
         self.last_mode = self.mode
+        self.last_k    = self.k
             
             
             
@@ -198,11 +234,23 @@ class dsdm_pid(object):
         msg2.actual       = self.actual
         msg2.e            = self.e
         msg2.de           = self.de
+        msg2.cmd          = self.cmd
         
         self.pub_e.publish( msg2 )
         
         if self.verbose:
             print('Error:', self.e )
+            
+            
+            
+    #######################################
+    def feedback_callback( self , msg ):
+        """ actuator feedback """
+        
+        self.a   = msg.a
+        self.da  = msg.da
+        
+        self.callback( None )
         
     
     #######################################   
@@ -215,7 +263,7 @@ class dsdm_pid(object):
         self.a  = self.x[2]
         self.da = self.x[5]
         
-        self.callback( None )
+        #self.callback( None )
         
 
             
