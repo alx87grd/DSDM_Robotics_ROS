@@ -3,11 +3,8 @@ import rospy
 import numpy as np
 from sensor_msgs.msg import Joy
 from std_msgs.msg    import Float64MultiArray, Bool, Int32
-<<<<<<< HEAD
 from dsdm_msgs.msg   import dsdm_actuator_control_inputs, ctl_error
-=======
-from dsdm_msgs.msg   import dsdm_actuator_control_inputs
->>>>>>> full-robot-dev
+
 
 from AlexRobotics.dynamic  import Prototypes             as Proto
 from AlexRobotics.control  import RminComputedTorque     as RminCTC

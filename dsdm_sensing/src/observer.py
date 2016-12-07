@@ -54,8 +54,10 @@ class DSDM_OBS(object):
             self.plot_partial_config = True
             
         elif self.robot_type == 'pendulum':
+            #self.R                   = CM.TestPendulum()
+            #self.plot_partial_config = False
             self.R                   = CM.TestPendulum()
-            self.plot_partial_config = False
+            self.plot_partial_config = True
         
         else:
             print 'Error loading robot type'
@@ -115,13 +117,14 @@ class DSDM_OBS(object):
     ###################################
     def estimate_state(self ):
         """ """
-        
+            
         # Just pure kinematic for boeing Arm
-        self.q     = self.R.a2q(   self.a  + self.a_zero      )
+        self.q     = self.R.a2q(   self.a  + self.a_zero )
         self.dq    = self.R.da2dq( self.da , self.q )
         self.x_hat = self.R.q2x( self.q , self.dq   )  
-        
+
         if self.plot_partial_config :
+            
             if self.robot_config == 'wrist-only':
                 self.qp = np.array( [ self.q[2] ] )
                 
@@ -140,6 +143,7 @@ class DSDM_OBS(object):
             
             if self.plot_partial_config :
                 self.Rp.update_show( self.qp  )
+
     
     #######################################   
     def pub_state_estimate( self ):
@@ -177,7 +181,8 @@ class DSDM_OBS(object):
         self.da[2] = msg.da
         
         # Evante based timing
-        #self.main_callback()
+        if self.robot_type == 'pendulum':
+            self.main_callback()
         
         
         
