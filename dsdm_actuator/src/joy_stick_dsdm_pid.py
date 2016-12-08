@@ -58,7 +58,7 @@ class dsdm_pid(object):
         self.gain_HF_P = np.array([ 0.4 , 0.1 , 0.0 ])
         self.gain_HS_S = np.array([ 0.1 , 0.1 , 0.0 ])
         self.gain_HF_S = np.array([ 0.2 , 0.1 , 0.0 ])
-        self.e_sum_r   = 4    # ratio of equivalence of integral action between modes
+        self.e_sum_r   = 3    # ratio of equivalence of integral action between modes
         self.dt        = 0.02  # assuming 500 HZ
         
         # Init hysteresis
@@ -71,6 +71,19 @@ class dsdm_pid(object):
         """ """
         
         if self.enable:
+            
+            # Equivalence of integral action between modes
+            # Gear changed
+            if not( self.last_k == self.k_real ):
+                # HF --> HS
+                if (self.k_real == 0 ):
+                    self.e_sum = self.e_sum * self.e_sum_r + 0.2
+                    
+                else:
+                    self.e_sum = self.e_sum * ( 1.0 / self.e_sum_r ) 
+                    
+            self.last_k    = self.k_real
+            
             
             # OPENLOOP
             if self.mode == 'PWM' :
@@ -135,8 +148,6 @@ class dsdm_pid(object):
                 
                 self.e_sum = self.e_sum + e * self.dt
                 
-                print self.e_sum
-                
                 cmd = kp * e + kd * de + ki * self.e_sum
                 
                 self.f = cmd * 0.2
@@ -150,7 +161,7 @@ class dsdm_pid(object):
                     
             # Nullspace Target
             self.n = self.n_d
-            
+
         
         else:
             self.f   = 0
@@ -191,30 +202,22 @@ class dsdm_pid(object):
             self.mode   = 'PID_position'
         elif ( msg.buttons[2] == 1 ):
             self.mode   = 'PID_speed'
+        elif ( msg.buttons[3] == 1 ):
+            # Auto setpoint for speed
+            self.mode        = 'PID_speed'
+            self.set_point   = 1.0
         else:
             self.mode = 'PWM'
             self.e_sum  = 0 # Reset integral error
             
-        # Reset Integral Error is mode changed
+        # Reset Integral Error if mode changed
         if not( self.last_mode == self.mode ):
             
             print 'Control Mode Updated to: ' + self.mode
             self.e_sum = 0
             
-        # Equivalence of integral action between modes
-            
-        # Mode changed
-        if not( self.last_k == self.k_real ):
-            # HF --> HS
-            if (self.k_real == 0 ):
-                self.e_sum = self.e_sum * self.e_sum_r
-                
-            elif (self.k_real == 1 ):
-                self.e_sum = self.e_sum * ( 1.0 / self.e_sum_r )
-            
-            
         self.last_mode = self.mode
-        self.last_k    = self.k_real
+        
             
             
             
@@ -237,6 +240,7 @@ class dsdm_pid(object):
         msg2.actual       = self.actual
         msg2.e            = self.e
         msg2.de           = self.de
+        msg2.e_int        = self.e_sum
         msg2.cmd          = self.cmd
         
         self.pub_e.publish( msg2 )
