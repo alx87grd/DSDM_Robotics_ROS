@@ -49,12 +49,13 @@ class DSDM_CTL(object):
         self.n = 0
         
         # Feedback from sensors
-        self.y_raw = np.zeros(3)  # M1 = [1], M2 = [1]
-        self.w_raw = np.zeros(3)  # Velocity
-        self.y     = np.zeros(3)  # M1 = [1], M2 = [1]
-        self.w     = np.zeros(3)  # Velocity
-        self.a     = 0
-        self.da    = 0
+        self.y_raw  = np.zeros(3)  # M1 = [1], M2 = [1]
+        self.w_raw  = np.zeros(3)  # Velocity
+        self.y      = np.zeros(3)  # M1 = [1], M2 = [1]
+        self.w      = np.zeros(3)  # Velocity
+        self.a      = 0
+        self.da     = 0
+        self.k_real = 1
         
         # Memory for speed filter
         self.y_past = np.zeros(3)  # t-1 value
@@ -157,6 +158,9 @@ class DSDM_CTL(object):
             # Reset sync ctl
             self.sync_err_i       = 0 # intergral effect
             
+            # Feedback data
+            self.k_real           = 0 # High speed mode
+            
             
             
         elif ( self.k ==1 ):
@@ -183,6 +187,9 @@ class DSDM_CTL(object):
                 # Reset syn ctl
                 self.sync_err_i       = 0 # intergral effect
                 
+                # Feedback data
+                self.k_real           = 1 # High Force mode
+                
                 
             else:
                 
@@ -204,6 +211,9 @@ class DSDM_CTL(object):
                 self.ctrl_modes       = [      self.ctl_mode                  , self.ctl_mode  ] 
                 #self.brake_state      = 255 # Brake open
                 self.brake_open()
+                
+                # Feedback data
+                self.k_real           = 0 # High speed mode
                 
         
         # Satuation
@@ -397,16 +407,17 @@ class DSDM_CTL(object):
         msg_y.header.frame_id  = msg.header.frame_id
         
         # Feedback info
-        msg_y.theta = self.y
-        msg_y.w     = self.w
-        msg_y.y_raw = self.y_raw
-        msg_y.w_raw = self.w_raw
-        msg_y.da    = self.da
-        msg_y.a     = self.a
-        msg_y.w1    = self.w[1]
-        msg_y.w2    = self.w[2]
-        msg_y.id1   = self.setpoints[0]
-        msg_y.id2   = self.setpoints[1]
+        msg_y.theta  = self.y
+        msg_y.w      = self.w
+        msg_y.y_raw  = self.y_raw
+        msg_y.w_raw  = self.w_raw
+        msg_y.da     = self.da
+        msg_y.a      = self.a
+        msg_y.w1     = self.w[1]
+        msg_y.w2     = self.w[2]
+        msg_y.id1    = self.setpoints[0]
+        msg_y.id2    = self.setpoints[1]
+        msg_y.k_real = self.k_real
         
         self.pub_y.publish( msg_y )
         
