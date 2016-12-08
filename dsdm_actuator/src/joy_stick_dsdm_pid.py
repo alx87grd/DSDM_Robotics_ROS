@@ -53,11 +53,12 @@ class dsdm_pid(object):
         self.mode      = 'PWM'
         #self.mode      = 'PID_position'
         #self.mode      = 'PID_speed'
+        self.gain_HS_P = np.array([ 0.6 , 0.6  , 0.05 ])
+        self.gain_HF_P = np.array([ 0.4 , 0.05 , 0.0 ])
+        self.gain_HS_S = np.array([ 0.1 , 0.1  , 0.0 ])
+        self.gain_HF_S = np.array([ 0.2 , 0.1  , 0.0 ])
         self.e_sum     = 0
-        self.gain_HS_P = np.array([ 0.6 , 0.1 , 0.0 ])
-        self.gain_HF_P = np.array([ 0.4 , 0.1 , 0.0 ])
-        self.gain_HS_S = np.array([ 0.1 , 0.1 , 0.0 ])
-        self.gain_HF_S = np.array([ 0.2 , 0.1 , 0.0 ])
+        self.e_sat     = 3
         self.e_sum_r   = 3    # ratio of equivalence of integral action between modes
         self.dt        = 0.02  # assuming 500 HZ
         
@@ -83,6 +84,12 @@ class dsdm_pid(object):
                     self.e_sum = self.e_sum * ( 1.0 / self.e_sum_r ) 
                     
             self.last_k    = self.k_real
+            
+            # Saturation
+            if (self.e_sum < -self.e_sat) :
+                self.e_sum = -self.e_sat
+            elif (self.e_sum > self.e_sat) :
+                self.e_sum = self.e_sat
             
             
             # OPENLOOP
@@ -200,12 +207,19 @@ class dsdm_pid(object):
             
         if ( msg.buttons[1] == 1 ):
             self.mode   = 'PID_position'
+            
+            if ( msg.buttons[3] == 1 ):
+                # Auto setpoint for posiiton
+                self.set_point = 3.14
+            
+            
         elif ( msg.buttons[2] == 1 ):
             self.mode   = 'PID_speed'
-        elif ( msg.buttons[3] == 1 ):
-            # Auto setpoint for speed
-            self.mode        = 'PID_speed'
-            self.set_point   = 1.0
+            
+            if ( msg.buttons[3] == 1 ):
+                # Auto setpoint for speed
+                self.set_point   = 1.0
+            
         else:
             self.mode = 'PWM'
             self.e_sum  = 0 # Reset integral error

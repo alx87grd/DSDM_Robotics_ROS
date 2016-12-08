@@ -18,9 +18,9 @@ output_units_corr:    1       # Value correcting for output units that are not r
 #output_units_corr:    0.0001591549      # from rad to meter : 1/ 2 * pi / 1000
 
 # Gear ratios
-r1:                   4        # gear ratio motor 1
-r2:                  72        # gear ratio motor 2
-rout:                20        # output reduction (lead in mm)
+r1:                 23.2      # gear ratio motor 1
+r2:                 474       # gear ratio motor 2
+rout:                 1       # output reduction 
 
 # Signs Encoder
 out_sign:   -1 
@@ -49,8 +49,10 @@ mbrake: 2
 
 
 # DSDM sync controller
-g_sync_kp :    1    # overall gain
-g_sync_ki :    0.1  # integral gain
-g_1       :   -1    # motor 1 component
-g_2       :   20    # motor 2 component
-w_eps     :   10    # allowable velocity before engaging the brake [rad/sec]
+g_sync_kp    :    1    # overall gain
+g_sync_ki    :    0.1  # integral gain
+g_sync_kp_HS :    1    # overall gain HS
+g_sync_ip_HS :    0    # overall gain HS
+g_1          :   -1    # motor 1 component
+g_2          :   20    # motor 2 component
+w_eps        :   10    # allowable velocity before engaging the brake [rad/sec]
