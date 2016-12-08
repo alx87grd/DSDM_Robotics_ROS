@@ -29,9 +29,10 @@ class dsdm_pid(object):
         self.k  = 1 # High force mode
         
         # Init sensor feedback
-        self.x  = np.zeros(2)
-        self.a  = self.x[0]
-        self.da = self.x[1]
+        self.x      = np.zeros(2)
+        self.a      = self.x[0]
+        self.da     = self.x[1]
+        self.k_real = 1
         
         # Init joy feedback
         self.joy_msg         = Joy()
@@ -55,14 +56,14 @@ class dsdm_pid(object):
         self.e_sum     = 0
         self.gain_HS_P = np.array([ 0.6 , 0.1 , 0.0 ])
         self.gain_HF_P = np.array([ 0.4 , 0.1 , 0.0 ])
-        self.gain_HS_S = np.array([ 0.1 , 0.05 , 0.0 ])
+        self.gain_HS_S = np.array([ 0.1 , 0.1 , 0.0 ])
         self.gain_HF_S = np.array([ 0.2 , 0.1 , 0.0 ])
-        self.e_sum_r   = 7    # ratio of equivalence of integral action between modes
+        self.e_sum_r   = 4    # ratio of equivalence of integral action between modes
         self.dt        = 0.02  # assuming 500 HZ
         
         # Init hysteresis
         self.last_mode = self.mode
-        self.last_k    = 0
+        self.last_k    = 1
         
     
     #######################################   
@@ -86,7 +87,7 @@ class dsdm_pid(object):
             elif self.mode == 'PID_position' :
                 
                  #  Pick gains
-                if ( self.k == 0):
+                if ( self.k_real == 0):
                     kp = self.gain_HS_P[0]
                     ki = self.gain_HS_P[1]
                     kd = self.gain_HS_P[2]
@@ -118,7 +119,7 @@ class dsdm_pid(object):
             elif self.mode == 'PID_speed' :
                 
                 #  Pick gains
-                if ( self.k == 0 ):
+                if ( self.k_real == 0 ):
                     kp = self.gain_HS_S[0]
                     ki = self.gain_HS_S[1]
                     kd = self.gain_HS_S[2]
@@ -133,6 +134,8 @@ class dsdm_pid(object):
                 de = 0
                 
                 self.e_sum = self.e_sum + e * self.dt
+                
+                print self.e_sum
                 
                 cmd = kp * e + kd * de + ki * self.e_sum
                 
@@ -201,17 +204,17 @@ class dsdm_pid(object):
         # Equivalence of integral action between modes
             
         # Mode changed
-        if not( self.last_k == self.k):
+        if not( self.last_k == self.k_real ):
             # HF --> HS
-            if (self.k == 0 ):
+            if (self.k_real == 0 ):
                 self.e_sum = self.e_sum * self.e_sum_r
                 
-            elif (self.k ==1 ):
+            elif (self.k_real == 1 ):
                 self.e_sum = self.e_sum * ( 1.0 / self.e_sum_r )
             
             
         self.last_mode = self.mode
-        self.last_k    = self.k
+        self.last_k    = self.k_real
             
             
             
@@ -247,8 +250,9 @@ class dsdm_pid(object):
     def feedback_callback( self , msg ):
         """ actuator feedback """
         
-        self.a   = msg.a
-        self.da  = msg.da
+        self.a       = msg.a
+        self.da      = msg.da
+        self.k_real  = msg.k_real
         
         self.callback( None )
         
