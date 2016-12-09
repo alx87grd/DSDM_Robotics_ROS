@@ -649,7 +649,7 @@ pltr.plot_contact( 'dsdm_compliant_down' )
 ###  Stiff Contact                ############
 ##############################################
 
-name      = 'dsdm_a2_stiff_no1'
+#name      = 'dsdm_a2_stiff_no1'
 
 #i = 1 + 500 * 1
 ##j = i + 500 * 
@@ -659,24 +659,76 @@ name      = 'dsdm_a2_stiff_no1'
 #pltr.plot_contact( 'dsdm_stiff_all' )
 
 
+#i = 1 + 500 * 18
+##j = i + 500 * 
+#j = 1 + 500 * 19
+#
+#pltr.loaddata( name , i , j  )
+#pltr.plot_contact( 'dsdm_stiff_down' )
 
-i = 1 + 500 * 18
+
+# TO kept Nice
+
+name      = 'dsdm_a2_stiff_no5'
+
+i = 1 + 500 * 1.5
 #j = i + 500 * 
-j = 1 + 500 * 19
-
-pltr.loaddata( name , i , j  )
-pltr.plot_contact( 'dsdm_stiff_down' )
-
-
-
-name      = 'dsdm_a2_stiff_no4'
-
-i = 1 + 500 * 1.8
-#j = i + 500 * 
-j = 1 + 500 * 2.4
+j = 1 + 500 * 2
 
 pltr.loaddata( name , i , j )
-pltr.plot_contact( 'dsdm_stiff_all' )
+pltr.plot_contact( 'dsdm_stiff_down_latency' )
+
+
+name      = 'dsdm_a2_stiff_no6'
+
+i = 1 + 500 * 31
+#j = i + 500 * 
+j = 1 + 500 * 31.5
+
+pltr.loaddata( name , i , j )
+pltr.plot_contact( 'dsdm_stiff_down_nice' )
+
+
+i = 1 + 500 * 21
+#j = i + 500 * 
+j = 1 + 500 * 22
+
+pltr.loaddata( name , i , j )
+pltr.plot_contact( 'dsdm_stiff_down_some_negative' )
+
+
+
+name      = 'dsdm_a2_stiff_no7'
+
+i = 1 + 500 * 45.4
+#j = i + 500 * 
+j = 1 + 500 * 46
+
+pltr.loaddata( name , i , j )
+pltr.plot_contact( 'dsdm_stiff_auto' )
+
+
+name      = 'dsdm_a2_stiff_no8'
+
+i = 1 + 500 * 14.5
+#j = i + 500 * 
+j = 1 + 500 * 15
+
+pltr.loaddata( name , i , j )
+pltr.plot_contact( 'dsdm_stiff_auto_new' )
+
+
+name      = 'dsdm_a2_stiff_no9'
+
+i = 1 + 500 * 1.6
+#j = i + 500 * 
+j = 1 + 500 * 2.1
+
+pltr.loaddata( name , i , j )
+pltr.plot_contact( 'dsdm_stiff_auto_nullspace_wrong' )
+
+
+
 
 
 

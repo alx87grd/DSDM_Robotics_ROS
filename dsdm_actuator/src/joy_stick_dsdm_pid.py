@@ -51,6 +51,7 @@ class dsdm_pid(object):
         # PID
         self.enable    = False
         self.mode      = 'PWM'
+        self.autoshift = False
         #self.mode      = 'PID_position'
         #self.mode      = 'PID_speed'
         self.gain_HS_P = np.array([ 0.6 , 0.6  , 0.05 ])
@@ -73,6 +74,7 @@ class dsdm_pid(object):
         
         if self.enable:
             
+            ##########################################################
             # Equivalence of integral action between modes
             # Gear changed
             if not( self.last_k == self.k_real ):
@@ -91,6 +93,14 @@ class dsdm_pid(object):
             elif (self.e_sum > self.e_sat) :
                 self.e_sum = self.e_sat
             
+            ###############
+            if self.autoshift:
+                if ( self.a > 0.55 ):
+                    self.k = 1
+                else:
+                    self.k = 0
+            
+            ######################################################
             
             # OPENLOOP
             if self.mode == 'PWM' :
@@ -201,6 +211,12 @@ class dsdm_pid(object):
         else:
             self.enable = False
             self.e_sum  = 0 # Reset integral error
+            
+        #Automatic gear-shift
+        if ( msg.buttons[5] == 1 ):
+            self.autoshift = True
+        else:
+            self.autoshift = False
             
         # Pick ctrl_mode with button state
         self.mode = 'PWM' #    Default

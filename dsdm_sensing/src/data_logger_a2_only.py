@@ -42,7 +42,7 @@ class logger(object):
         self.DATA = np.zeros((1,15))
         
         
-        name      = 'dsdm_a2_stiff_no4'
+        name      = 'dsdm_a2_stiff_no9'
         
         self.name = '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_sensing/data/' + name + '.npy'
         

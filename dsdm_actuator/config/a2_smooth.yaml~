@@ -4,7 +4,7 @@
 
 # Dynamics
 filter_rc:            0.02       # time constant for the filtered differentiation of position values [sec]
-filter_active:        false       # filteron or off
+filter_active:        true       # filteron or off
 
 
 # Units
@@ -54,7 +54,7 @@ mbrake: 2
 # DSDM sync controller (smooth
 g_sync_kp    :    10    # overall gain
 g_sync_ki    :    0.2   # integral gain
-g_sync_kp_HS :    5     # overall gain HS
+g_sync_kp_HS :    0     # overall gain HS
 g_sync_ki_HS :    0     # overall gain HS
 g_1          :   -1     # motor 1 component
 g_2          :   20     # motor 2 component
