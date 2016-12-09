@@ -18,10 +18,12 @@ class plotter(object):
     
     def __init__(self):
         
-        pass
+        self.save = False
+        self.t0   = 0
+        self.q0   = 0
     
 
-    def loaddata( self, name , i , j ):
+    def loaddata( self, name , i , j , zero_position = True ):
     
         fullname      = '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_sensing/data/' + name + '.npy'
         #fullname      = name + '.npy'
@@ -29,7 +31,12 @@ class plotter(object):
         DATA = np.load( fullname )
         
         ## DEOCODING
-        self.q  = DATA[i:j,0] - DATA[i,0]
+        if zero_position:
+            self.q  = DATA[i:j,0] - DATA[i,0]
+            self.q0 = DATA[i,0]
+        else:
+            self.q  = DATA[i:j,0] - self.q0
+            
         self.dq = DATA[i:j,1]
         self.qd = DATA[i:j,2]
         self.f  = DATA[i:j,3]
@@ -98,8 +105,10 @@ class plotter(object):
     
         simfig.tight_layout()
         
-        simfig.savefig( filename + '.pdf' )
-        simfig.savefig( filename + '.png' )
+        if self.save:
+            
+            simfig.savefig( filename + '.pdf' )
+            simfig.savefig( filename + '.png' )
         
         simfig.show()
         
@@ -154,8 +163,10 @@ class plotter(object):
     
         simfig.tight_layout()
         
-        simfig.savefig( filename + '.pdf' )
-        simfig.savefig( filename + '.png' )
+        if self.save:
+            
+            simfig.savefig( filename + '.pdf' )
+            simfig.savefig( filename + '.png' )
         
         simfig.show()
         
@@ -184,8 +195,10 @@ class plotter(object):
         
         simfig.tight_layout()
         
-        simfig.savefig( filename + '.pdf' )
-        simfig.savefig( filename + '.png' )
+        if self.save:
+            
+            simfig.savefig( filename + '.pdf' )
+            simfig.savefig( filename + '.png' )
         
         simfig.show()
         
@@ -233,8 +246,10 @@ class plotter(object):
         
         simfig.tight_layout()
         
-        simfig.savefig( filename + '.pdf' )
-        simfig.savefig( filename + '.png' )
+        if self.save:
+            
+            simfig.savefig( filename + '.pdf' )
+            simfig.savefig( filename + '.png' )
         
         simfig.show()
         
@@ -285,8 +300,10 @@ class plotter(object):
         
         simfig.tight_layout()
         
-        simfig.savefig( filename + '.pdf' )
-        simfig.savefig( filename + '.png' )
+        if self.save:
+            
+            simfig.savefig( filename + '.pdf' )
+            simfig.savefig( filename + '.png' )
         
         simfig.show()
         
@@ -332,8 +349,10 @@ class plotter(object):
         
         simfig.tight_layout()
         
-        simfig.savefig( filename + '.pdf' )
-        simfig.savefig( filename + '.png' )
+        if self.save:
+            
+            simfig.savefig( filename + '.pdf' )
+            simfig.savefig( filename + '.png' )
         
         simfig.show()
         
@@ -372,8 +391,70 @@ class plotter(object):
         
         simfig.tight_layout()
         
-        simfig.savefig( filename + '.pdf' )
-        simfig.savefig( filename + '.png' )
+        if self.save:
+            
+            simfig.savefig( filename + '.pdf' )
+            simfig.savefig( filename + '.png' )
+        
+        simfig.show()
+        
+        
+        
+    def plot_contact(self , filename ):
+    
+        fontsize = 5
+        
+        matplotlib.rc('xtick', labelsize=fontsize )
+        matplotlib.rc('ytick', labelsize=fontsize )
+        
+        
+        simfig , plot = plt.subplots(4, sharex=True,figsize=(3, 3),dpi=400, frameon=True)
+        
+        simfig.canvas.set_window_title( filename )
+        
+        #plot[0].plot( t ,  qd , 'r--', label = 'Ref. trajectory')
+        plot[0].plot( self.t ,  self.q , 'b' ,  label = 'Actual')
+        #plot[0].set_yticks([0,100])
+        #plot[0].set_ylim(-30,170)
+        plot[0].grid(True)
+        #legend = plot[0].legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
+        #legend.get_frame().set_alpha(0.4)
+        
+        plot[1].plot( self.t ,  self.dq , 'b')
+        #plot[1].set_yticks([0,10,20])
+        #plot[1].set_ylim(-5,25)
+        plot[1].grid(True)
+        
+        plot[2].plot( self.t ,  -self.wr1 , 'b' , label = 'M1')
+        plot[2].plot( self.t ,  -self.wr2 , 'r' , label = 'M2')
+        plot[2].grid(True)
+        legend = plot[2].legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
+        legend.get_frame().set_alpha(0.4)
+        
+        plot[3].plot( self.t ,  self.k * 451 + 23 , 'r'   , label = 'Ref.')
+        plot[3].plot( self.t ,  self.b * 451 + 23 , 'b--' , label = 'Actual')
+        plot[3].set_yticks([23,474])
+        plot[3].set_ylim(-100,600)
+        plot[3].grid(True)
+        legend = plot[3].legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
+        legend.get_frame().set_alpha(0.4)
+        
+        plot[0].set_ylabel('Angle \n [rad]' , fontsize=fontsize )
+        plot[1].set_ylabel('Output \n [rad/sec]' , fontsize=fontsize )
+        plot[2].set_ylabel('Motors \n [rad/sec]' , fontsize=fontsize )
+        plot[3].set_ylabel('Gear Ratio' , fontsize=fontsize )
+        
+        plot[-1].set_xlabel('Time [sec]', fontsize=fontsize )
+        #plot[-1].set_xlim(0,4)
+        #plot[-1].set_xticks([0,1,2,3,4])
+    
+    
+        simfig.tight_layout()
+        
+        if self.save:
+            
+            simfig.savefig( filename + '.pdf' )
+            simfig.savefig( filename + '.png' )
         
         simfig.show()
         
@@ -382,6 +463,8 @@ class plotter(object):
 # Main
 
 pltr = plotter()
+
+pltr.save = False
     
 ##############################################
 ###      Manual Experiment ###################
@@ -466,7 +549,7 @@ pltr.plot_nullspace( 'dsdm_nullspace' )
 
 
 ##############################################
-###  Nullspace  ############
+###  Cst speed shifts  ############
 ##############################################
 
 # Wihtout preparation
@@ -502,3 +585,102 @@ j = 1 + 500 * 4.9
 
 pltr.loaddata( name , i , j)
 pltr.plot_shift_zoom( 'dsdm_cstspd_shifts_withprep_zoom' )
+
+
+##############################################
+###  Compliant Contact            ############
+##############################################
+
+
+#name      = 'dsdm_a2_compliant_no3'
+#
+#i = 1 + 500 * 1.5
+##j = i + 500 * 
+#j = 1 + 500 * 2.5
+#
+#pltr.loaddata( name , i , j )
+#pltr.plot_contact( 'dsdm_compliant_HS' )
+#
+#
+#i = 1 + 500 * 15.5
+##j = i + 500 * 
+#j = 1 + 500 * 16.5
+#
+#pltr.loaddata( name , i , j, False )
+#pltr.plot_contact( 'dsdm_compliant_down_shift' )
+
+
+name      = 'dsdm_a2_compliant_no5'
+
+
+#i = 1 + 500 * 1
+##j = i + 500 * 
+#j = 1 + 500 * 60
+#
+#pltr.loaddata( name , i , j )
+#pltr.plot_contact( 'dsdm_compliant' )
+
+
+i = 1 + 500 * 7.1
+#j = i + 500 * 
+j = 1 + 500 * 7.6
+
+pltr.loaddata( name , i , j  )
+pltr.plot_contact( 'dsdm_compliant_HS' )
+
+
+i = 1 + 500 * 11
+#j = i + 500 * 
+j = 1 + 500 * 13
+
+pltr.loaddata( name , i , j , False )
+pltr.plot_contact( 'dsdm_compliant_HF' )
+
+i = 1 + 500 * 24
+#j = i + 500 * 
+j = 1 + 500 * 24.5
+
+pltr.loaddata( name , i , j , False )
+pltr.plot_contact( 'dsdm_compliant_down' )
+
+
+
+##############################################
+###  Stiff Contact                ############
+##############################################
+
+name      = 'dsdm_a2_stiff_no1'
+
+#i = 1 + 500 * 1
+##j = i + 500 * 
+#j = 1 + 500 * 20
+#
+#pltr.loaddata( name , i , j )
+#pltr.plot_contact( 'dsdm_stiff_all' )
+
+
+
+i = 1 + 500 * 18
+#j = i + 500 * 
+j = 1 + 500 * 19
+
+pltr.loaddata( name , i , j  )
+pltr.plot_contact( 'dsdm_stiff_down' )
+
+
+
+name      = 'dsdm_a2_stiff_no4'
+
+i = 1 + 500 * 1.8
+#j = i + 500 * 
+j = 1 + 500 * 2.4
+
+pltr.loaddata( name , i , j )
+pltr.plot_contact( 'dsdm_stiff_all' )
+
+
+
+
+
+
+

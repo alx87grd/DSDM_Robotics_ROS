@@ -87,6 +87,7 @@ class DSDM_CTL(object):
         """ Load param on ROS server """
         
         self.filter_rc       = rospy.get_param("filter_rc",        0.05  )
+        self.filter_active   = rospy.get_param("filter_active",    True  )
         tpt                  = rospy.get_param("ticks_per_turns",   2000 )
         out_corr             = rospy.get_param("output_units_corr",    1 )
         r1                   = rospy.get_param("r1",                   1 )
@@ -343,7 +344,11 @@ class DSDM_CTL(object):
         # Compute filtered speed with raw large values
         self.w_raw       = self.y_raw - self.y_past                      # ticks per period
         w                = ( self.w_raw + 0.0 ) / dt                         # ticks per seconds
-        w_filtered_ticks = self.alpha * w + ( 1 - self.alpha ) * self.w_x    # filter
+        
+        if self.filter_active:
+            w_filtered_ticks = self.alpha * w + ( 1 - self.alpha ) * self.w_x    # filter
+        else:
+            w_filtered_ticks = w
         
         ################
         # Kinematic
