@@ -5,6 +5,12 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
+# Embed font type in PDF
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype']  = 42
+
+
+
 #data = np.array([[ self.q , self.dq , self.q_d , self.f , self.k , t, self.w1 , self.w2 , self.i1 , self.i2 , self.brake ]])
 
 

@@ -5,6 +5,12 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
+# Embed font type in PDF
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype']  = 42
+
+
+
 #data = np.array([[ self.q , self.dq , self.q_d , self.f , self.k , t, self.w1 , self.w2 , self.i1 , self.i2 , self.brake ]])
 
 #########################################
@@ -18,6 +24,7 @@ class plotter(object):
     def loaddata( self, name , i , j ):
     
         fullname      = '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_sensing/data/' + name + '.npy'
+        #fullname      = name + '.npy'
         
         DATA = np.load( fullname )
         
@@ -41,7 +48,7 @@ class plotter(object):
         
     ## Figures
     
-    def plot_position_tracking( self):
+    def plot_position_tracking( self , filename ):
     
         fontsize = 5
         
@@ -49,12 +56,12 @@ class plotter(object):
         matplotlib.rc('ytick', labelsize=fontsize )
         
         
-        simfig , plot = plt.subplots(4, sharex=True,figsize=(5, 3),dpi=400, frameon=True)
+        simfig , plot = plt.subplots(4, sharex=True,figsize=(3, 3),dpi=400, frameon=True)
         
-        #simfig.canvas.set_window_title('Closed loop trajectory')
+        simfig.canvas.set_window_title( filename )
         
-        plot[0].plot( self.t ,  self.qd , 'r--', label = 'Ref. trajectory')
-        plot[0].plot( self.t ,  self.q , 'b' ,  label = 'Actual position')
+        plot[0].plot( self.t ,  self.qd , 'r--', label = 'Ref.')
+        plot[0].plot( self.t ,  self.q , 'b' ,  label = 'Actual')
         plot[0].set_yticks([0, 3.14])
         plot[0].set_ylim(-2,5)
         legend = plot[0].legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
@@ -62,26 +69,26 @@ class plotter(object):
         plot[0].grid(True)
         
         plot[1].plot( self.t ,  self.dq , 'b')
-        #plot[1].set_yticks([-6,0,6])
-        #plot[1].set_ylim(-8,8)
+        plot[1].set_yticks([-20,-10,0,10,20])
+        plot[1].set_ylim(-25,25)
         plot[1].grid(True)
         
-        plot[2].plot( self.t ,  self.f , 'b')
+        plot[2].plot( self.t ,  self.f , 'r')
         plot[2].set_yticks([-0.2,0,0.2])
         plot[2].set_ylim(-0.3,0.3)
         plot[2].grid(True)
         
-        plot[3].plot( self.t ,  self.k * 451 + 23 , 'r'   , label = 'target')
-        plot[3].plot( self.t ,  self.b * 451 + 23 , 'b--' , label = 'engaged')
+        plot[3].plot( self.t ,  self.k * 451 + 23 , 'r'   , label = 'Ref.')
+        plot[3].plot( self.t ,  self.b * 451 + 23 , 'b--' , label = 'Actual')
         plot[3].set_yticks([23,474])
         plot[3].set_ylim(-100,600)
         plot[3].grid(True)
         legend = plot[3].legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
         legend.get_frame().set_alpha(0.4)
         
-        plot[0].set_ylabel('Angle [rad]' , fontsize=fontsize )
-        plot[1].set_ylabel('Speed [rad/sec]' , fontsize=fontsize )
-        plot[2].set_ylabel('Torque [Nm]' , fontsize=fontsize )
+        plot[0].set_ylabel('Angle \n [rad]' , fontsize=fontsize )
+        plot[1].set_ylabel('Speed \n [rad/sec]' , fontsize=fontsize )
+        plot[2].set_ylabel('Torque \n [Nm]' , fontsize=fontsize )
         plot[3].set_ylabel('Gear Ratio' , fontsize=fontsize )
         
         plot[-1].set_xlabel('Time [sec]', fontsize=fontsize )
@@ -91,10 +98,13 @@ class plotter(object):
     
         simfig.tight_layout()
         
+        simfig.savefig( filename + '.pdf' )
+        simfig.savefig( filename + '.png' )
+        
         simfig.show()
         
         
-    def plot_all_OL(self):
+    def plot_all_OL(self , filename ):
     
         fontsize = 5
         
@@ -104,19 +114,19 @@ class plotter(object):
         
         simfig , plot = plt.subplots(4, sharex=True,figsize=(3, 3),dpi=400, frameon=True)
         
-        simfig.canvas.set_window_title('All')
+        simfig.canvas.set_window_title( filename )
         
         #plot[0].plot( t ,  qd , 'r--', label = 'Ref. trajectory')
-        plot[0].plot( self.t ,  self.q , 'b' ,  label = 'Actual position')
-        #plot[0].set_yticks([-3.14,0])
-        #plot[0].set_ylim(-5,1)
+        plot[0].plot( self.t ,  self.q , 'b' ,  label = 'Actual')
+        plot[0].set_yticks([0,100])
+        plot[0].set_ylim(-30,170)
         plot[0].grid(True)
         #legend = plot[0].legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
         #legend.get_frame().set_alpha(0.4)
         
         plot[1].plot( self.t ,  self.dq , 'b')
-        #plot[1].set_yticks([-6,0,6])
-        #plot[1].set_ylim(-8,8)
+        plot[1].set_yticks([0,10,20])
+        plot[1].set_ylim(-5,25)
         plot[1].grid(True)
         
         plot[2].plot( self.t ,  self.f , 'b')
@@ -124,17 +134,17 @@ class plotter(object):
         plot[2].set_ylim(-0.3,0.3)
         plot[2].grid(True)
         
-        plot[3].plot( self.t ,  self.k * 451 + 23 , 'r'   , label = 'target')
-        plot[3].plot( self.t ,  self.b * 451 + 23 , 'b--' , label = 'engaged')
+        plot[3].plot( self.t ,  self.k * 451 + 23 , 'r'   , label = 'Ref.')
+        plot[3].plot( self.t ,  self.b * 451 + 23 , 'b--' , label = 'Actual')
         plot[3].set_yticks([23,474])
         plot[3].set_ylim(-100,600)
         plot[3].grid(True)
         legend = plot[3].legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
         legend.get_frame().set_alpha(0.4)
         
-        plot[0].set_ylabel('Angle [rad]' , fontsize=fontsize )
-        plot[1].set_ylabel('Speed [rad/sec]' , fontsize=fontsize )
-        plot[2].set_ylabel('Torque [Nm]' , fontsize=fontsize )
+        plot[0].set_ylabel('Angle \n [rad]' , fontsize=fontsize )
+        plot[1].set_ylabel('Speed \n [rad/sec]' , fontsize=fontsize )
+        plot[2].set_ylabel('Torque \n [Nm]' , fontsize=fontsize )
         plot[3].set_ylabel('Gear Ratio' , fontsize=fontsize )
         
         plot[-1].set_xlabel('Time [sec]', fontsize=fontsize )
@@ -144,10 +154,13 @@ class plotter(object):
     
         simfig.tight_layout()
         
+        simfig.savefig( filename + '.pdf' )
+        simfig.savefig( filename + '.png' )
+        
         simfig.show()
         
     
-    def plot_motors(self):
+    def plot_motors(self , filename ):
     
         fontsize = 5
         
@@ -155,9 +168,9 @@ class plotter(object):
         matplotlib.rc('ytick', labelsize=fontsize )
         
         
-        simfig , plot = plt.subplots(1, sharex=True,figsize=(4, 3),dpi=400, frameon=True)
+        simfig , plot = plt.subplots(1, sharex=True,figsize=(3, 2),dpi=400, frameon=True)
         
-        simfig.canvas.set_window_title('Motors velocity')
+        simfig.canvas.set_window_title( filename )
         
         plot.plot( self.t ,  -self.w1 , 'b' , label = 'M1')
         plot.plot( self.t ,  -self.w2 , 'r' , label = 'M2')
@@ -165,16 +178,19 @@ class plotter(object):
         legend = plot.legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
         legend.get_frame().set_alpha(0.4)
         
-        plot.set_ylabel('Velocity [rad/sec' , fontsize=fontsize )
+        plot.set_ylabel('Velocity [rad/sec]' , fontsize=fontsize )
         
         plot.set_xlabel('Time [sec]', fontsize=fontsize )
         
         simfig.tight_layout()
         
+        simfig.savefig( filename + '.pdf' )
+        simfig.savefig( filename + '.png' )
+        
         simfig.show()
         
         
-    def plot_shift(self):
+    def plot_shift(self , filename , LS = False ):
     
         fontsize = 5
         
@@ -184,12 +200,16 @@ class plotter(object):
         
         simfig , plot = plt.subplots(3, sharex=True,figsize=(3, 3),dpi=400, frameon=True)
         
-        simfig.canvas.set_window_title('Shift')
+        simfig.canvas.set_window_title( filename )
         
-        plot[0].plot( self.t ,  self.dq , 'b' ,  label = 'Actual position')
+        plot[0].plot( self.t ,  self.dq , 'b' ,  label = 'Actual')
         #plot[0].set_yticks([-3.14,0])
         #plot[0].set_ylim(-5,1)
         plot[0].grid(True)
+        
+        if LS:
+            plot[0].set_yticks([0,1.0])
+            plot[0].set_ylim(-0.6,1.6)
         
         plot[1].plot( self.t ,  -self.w1 , 'b' , label = 'M1')
         plot[1].plot( self.t ,  -self.w2 , 'r' , label = 'M2')
@@ -197,26 +217,29 @@ class plotter(object):
         legend = plot[1].legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
         legend.get_frame().set_alpha(0.4)
         
-        plot[2].plot( self.t ,  self.k * 451 + 23 , 'r'   , label = 'target')
-        plot[2].plot( self.t ,  self.b * 451 + 23 , 'b--' , label = 'engaged')
+        plot[2].plot( self.t ,  self.k * 451 + 23 , 'r'   , label = 'Ref.')
+        plot[2].plot( self.t ,  self.b * 451 + 23 , 'b--' , label = 'Actual')
         plot[2].set_yticks([23,474])
         plot[2].set_ylim(-100,600)
         plot[2].grid(True)
         legend = plot[2].legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
         legend.get_frame().set_alpha(0.4)
         
-        plot[0].set_ylabel('Velocity [rad/sec]' , fontsize=fontsize )
-        plot[1].set_ylabel('Velocity [rad/sec]' , fontsize=fontsize )
+        plot[0].set_ylabel('Output [rad/sec]' , fontsize=fontsize )
+        plot[1].set_ylabel('Motors [rad/sec]' , fontsize=fontsize )
         plot[2].set_ylabel('Gear Ratio' , fontsize=fontsize )
         
         plot[-1].set_xlabel('Time [sec]', fontsize=fontsize )
         
         simfig.tight_layout()
         
+        simfig.savefig( filename + '.pdf' )
+        simfig.savefig( filename + '.png' )
+        
         simfig.show()
         
         
-    def plot_shift_zoom(self):
+    def plot_shift_zoom(self , filename ):
     
         fontsize = 5
         
@@ -226,43 +249,50 @@ class plotter(object):
         
         simfig , plot = plt.subplots(4, sharex=True,figsize=(3, 3),dpi=400, frameon=True)
         
-        simfig.canvas.set_window_title('Shift')
+        simfig.canvas.set_window_title( filename )
         
-        plot[0].plot( self.t ,  self.dq , 'b' ,  label = 'Actual position')
-        #plot[0].set_yticks([-3.14,0])
-        #plot[0].set_ylim(-5,1)
+        plot[0].plot( self.t ,  self.dq , 'b' ,  label = 'Actual')
+        plot[0].set_yticks([0,1.0])
+        plot[0].set_ylim(-0.6,1.6)
         plot[0].grid(True)
         
         plot[1].plot( self.t ,  -self.wr1 , 'b' , label = 'M1')
         #plot[1].plot( self.t ,  -self.w2 , 'r' , label = 'M2')
         plot[1].grid(True)
+        plot[1].set_yticks([-5,0,5])
+        plot[1].set_ylim(-6,6)
         
         #plot[1].plot( self.t ,  -self.w1 , 'b' , label = 'M1')
         plot[2].plot( self.t ,  -self.w2 , 'r' , label = 'M2')
         plot[2].grid(True)
+        plot[2].set_yticks([0,500])
+        plot[2].set_ylim(-50,550)
         
-        plot[3].plot( self.t ,  self.k * 451 + 23 , 'r'   , label = 'target')
-        plot[3].plot( self.t ,  self.b * 451 + 23 , 'b--' , label = 'engaged')
+        plot[3].plot( self.t ,  self.k * 451 + 23 , 'r'   , label = 'Ref.')
+        plot[3].plot( self.t ,  self.b * 451 + 23 , 'b--' , label = 'Actual')
         plot[3].set_yticks([23,474])
         plot[3].set_ylim(-100,600)
         plot[3].grid(True)
         legend = plot[2].legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
         legend.get_frame().set_alpha(0.4)
         
-        plot[0].set_ylabel('Output [rad/sec]' , fontsize=fontsize )
-        plot[1].set_ylabel('M1 [ticks/dt]' , fontsize=fontsize )
-        plot[2].set_ylabel('M2 [rad/sec]' , fontsize=fontsize )
+        plot[0].set_ylabel('Output \n [rad/sec]' , fontsize=fontsize )
+        plot[1].set_ylabel('M1 \n [ticks/dt]' , fontsize=fontsize )
+        plot[2].set_ylabel('M2 \n [rad/sec]' , fontsize=fontsize )
         plot[3].set_ylabel('Gear Ratio' , fontsize=fontsize )
         
         plot[-1].set_xlabel('Time [sec]', fontsize=fontsize )
         
         simfig.tight_layout()
         
+        simfig.savefig( filename + '.pdf' )
+        simfig.savefig( filename + '.png' )
+        
         simfig.show()
         
         
         
-    def plot_speed_tracking(self):
+    def plot_speed_tracking(self , filename ):
     
         fontsize = 5
         
@@ -272,10 +302,10 @@ class plotter(object):
         
         simfig , plot = plt.subplots(3, sharex=True,figsize=(3, 3),dpi=400, frameon=True)
         
-        simfig.canvas.set_window_title('Speed tracking')
+        simfig.canvas.set_window_title( filename )
         
         plot[0].plot( self.t ,  self.dq , 'b' ,  label = 'Actual')
-        plot[0].plot( self.t ,  self.qd , 'r--', label = 'Target')
+        plot[0].plot( self.t ,  self.qd , 'r--', label = 'Ref.')
         #plot[0].set_yticks([-3.14,0])
         #plot[0].set_ylim(-5,1)
         plot[0].grid(True)
@@ -286,26 +316,29 @@ class plotter(object):
         legend = plot[1].legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
         legend.get_frame().set_alpha(0.4)
         
-        plot[2].plot( self.t ,  self.k * 451 + 23 , 'r'   , label = 'target')
-        plot[2].plot( self.t ,  self.b * 451 + 23 , 'b--' , label = 'engaged')
+        plot[2].plot( self.t ,  self.k * 451 + 23 , 'r'   , label = 'Ref.')
+        plot[2].plot( self.t ,  self.b * 451 + 23 , 'b--' , label = 'Actual')
         plot[2].set_yticks([23,474])
         plot[2].set_ylim(-100,600)
         plot[2].grid(True)
         legend = plot[2].legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
         legend.get_frame().set_alpha(0.4)
         
-        plot[0].set_ylabel('Velocity [rad/sec]' , fontsize=fontsize )
-        plot[1].set_ylabel('Velocity [rad/sec]' , fontsize=fontsize )
+        plot[0].set_ylabel('Outputs [rad/sec]' , fontsize=fontsize )
+        plot[1].set_ylabel('Motors [rad/sec]' , fontsize=fontsize )
         plot[2].set_ylabel('Gear Ratio' , fontsize=fontsize )
         
         plot[-1].set_xlabel('Time [sec]', fontsize=fontsize )
         
         simfig.tight_layout()
         
+        simfig.savefig( filename + '.pdf' )
+        simfig.savefig( filename + '.png' )
+        
         simfig.show()
         
         
-    def plot_nullspace(self):
+    def plot_nullspace(self , filename ):
     
         fontsize = 5
         
@@ -315,10 +348,10 @@ class plotter(object):
         
         simfig , plot = plt.subplots(3, sharex=True,figsize=(3, 3),dpi=400, frameon=True)
         
-        simfig.canvas.set_window_title('Nullspace')
+        simfig.canvas.set_window_title( filename )
         
         plot[0].plot( self.t ,  self.dq , 'b' ,  label = 'Actual')
-        plot[0].plot( self.t ,  self.qd , 'r--', label = 'Target')
+        plot[0].plot( self.t ,  self.qd , 'r--', label = 'Ref.')
         #plot[0].set_yticks([-3.14,0])
         #plot[0].set_ylim(-5,1)
         plot[0].grid(True)
@@ -338,6 +371,9 @@ class plotter(object):
         plot[-1].set_xlabel('Time [sec]', fontsize=fontsize )
         
         simfig.tight_layout()
+        
+        simfig.savefig( filename + '.pdf' )
+        simfig.savefig( filename + '.png' )
         
         simfig.show()
         
@@ -364,11 +400,11 @@ pltr = plotter()
 name      = 'dsdm_a2_manual_no2'
 i = 1 + 500 * 1
 #j = i + 500 * 
-j = 1 + 500 * 37
+j = 1 + 500 * 40
 
 pltr.loaddata( name , i , j)
-pltr.plot_all_OL()
-pltr.plot_motors()
+pltr.plot_all_OL( 'dsdm_manual_all'    )
+pltr.plot_motors( 'dsdm_manual_motors' )
 
 #ZOOM on shifts
 name      = 'dsdm_a2_manual_no2'
@@ -377,7 +413,7 @@ i = 1 + 500 * 23
 j = 1 + 500 * 32
 
 pltr.loaddata( name , i , j)
-pltr.plot_shift()
+pltr.plot_shift(  'dsdm_manual_shift' )
 
 ##############################################
 ###   Speed Tracking Experiment ##############
@@ -389,7 +425,7 @@ i = 1 + 500 * 5
 j = 1 + 500 * 21
 
 pltr.loaddata( name , i , j)
-pltr.plot_speed_tracking()
+pltr.plot_speed_tracking( 'dsdm_speed_tracking' )
 
 ##############################################
 ###  Position Tracking Experiment ############
@@ -404,7 +440,7 @@ i = 1 + 500 * 40
 j = 1 + 500 * 80
 
 pltr.loaddata( name , i , j)
-pltr.plot_position_tracking()
+pltr.plot_position_tracking(  'dsdm_position_tracking' )
 
 ## HS
 #
@@ -426,7 +462,7 @@ i = 1 + 500 * 1
 j = 1 + 500 * 60
 
 pltr.loaddata( name , i , j)
-pltr.plot_nullspace()
+pltr.plot_nullspace( 'dsdm_nullspace' )
 
 
 ##############################################
@@ -437,12 +473,12 @@ pltr.plot_nullspace()
 
 name      = 'dsdm_a2_cstspd_shifts_no1'
 
-i = 1 + 500 * 5
+i = 1 + 500 * 4.5
 #j = i + 500 * 
-j = 1 + 500 * 13
+j = 1 + 500 * 14.5
 
 pltr.loaddata( name , i , j)
-pltr.plot_shift()
+pltr.plot_shift( 'dsdm_cstspd_shifts' , True )
 
 
 # With preparation
@@ -452,10 +488,10 @@ name      = 'dsdm_a2_cstspd_shifts_no2'
 
 i = 1 + 500 * 1
 #j = i + 500 * 
-j = 1 + 500 * 24
+j = 1 + 500 * 11
 
 pltr.loaddata( name , i , j)
-pltr.plot_shift()
+pltr.plot_shift( 'dsdm_cstspd_shifts_withprep' , True )
 
 
 # With preparation zoom
@@ -465,4 +501,4 @@ i = 1 + 500 * 4.6
 j = 1 + 500 * 4.9
 
 pltr.loaddata( name , i , j)
-pltr.plot_shift_zoom()
+pltr.plot_shift_zoom( 'dsdm_cstspd_shifts_withprep_zoom' )
