@@ -95,7 +95,7 @@ class dsdm_pid(object):
             
             ###############
             if self.autoshift:
-                if ( self.a > 0.55 ):
+                if ( self.a > 1.0 ):
                     self.k = 1
                 else:
                     self.k = 0

@@ -728,6 +728,49 @@ pltr.loaddata( name , i , j )
 pltr.plot_contact( 'dsdm_stiff_auto_nullspace_wrong' )
 
 
+##############################################
+###  Ballon                ############
+##############################################
+
+
+
+name      = 'dsdm_a2_ballon_no4'
+
+
+i = 1 + 500 * 51
+#j = i + 500 * 
+j = 1 + 500 * 55
+
+pltr.loaddata( name , i , j )
+pltr.plot_contact( 'dsdm_ballon_static' )
+
+
+#i = 1 + 500 * 29
+##j = i + 500 * 
+#j = 1 + 500 * 31
+#
+#pltr.loaddata( name , i , j )
+#pltr.plot_contact( 'dsdm_ballon_HS' )
+
+
+i = 1 + 500 * 68.6
+#j = i + 500 * 
+j = 1 + 500 * 68.9
+
+pltr.loaddata( name , i , j )
+pltr.plot_contact( 'dsdm_ballon_down_shift_nice' )
+
+
+name      = 'dsdm_a2_ballon_no6'
+
+i = 1 + 500 * 27.7
+#j = i + 500 * 
+j = 1 + 500 * 28.7
+
+pltr.loaddata( name , i , j )
+pltr.plot_contact( 'dsdm_ballon_down_shift_nice2' )
+
+
 
 
 
