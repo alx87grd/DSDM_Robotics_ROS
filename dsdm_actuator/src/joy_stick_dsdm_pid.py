@@ -51,7 +51,8 @@ class dsdm_pid(object):
         # PID
         self.enable    = False
         self.mode      = 'PWM'
-        self.autoshift = False
+        self.autoshift = True
+        self.impact    = False
         #self.mode      = 'PID_position'
         #self.mode      = 'PID_speed'
         self.gain_HS_P = np.array([ 0.6 , 0.6  , 0.05 ])
@@ -66,6 +67,10 @@ class dsdm_pid(object):
         # Init hysteresis
         self.last_mode = self.mode
         self.last_k    = 1
+        
+        self.dda       = 0
+        self.dda_state = 0
+        self.da_last   = 0
         
     
     #######################################   
@@ -95,10 +100,30 @@ class dsdm_pid(object):
             
             ###############
             if self.autoshift:
+                
+                # postion-based
+                """
                 if ( self.a > 1.0 ):
                     self.k = 1
                 else:
                     self.k = 0
+                """
+                
+                #print self.dda
+                
+                if (self.dda > 15 ):
+                    self.impact = True
+                    print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+                    
+                if self.impact:
+                    self.k = 1
+                else:
+                    self.k = 0
+                    
+            else:
+                #reset memory
+                self.impact = False
+                    
             
             ######################################################
             
@@ -273,6 +298,10 @@ class dsdm_pid(object):
         msg2.e_int        = self.e_sum
         msg2.cmd          = self.cmd
         
+        
+        # temp hack
+        msg2.cmd          = self.dda
+        
         self.pub_e.publish( msg2 )
         
         if self.verbose:
@@ -288,23 +317,27 @@ class dsdm_pid(object):
         self.da      = msg.da
         self.k_real  = msg.k_real
         
+        ## Acc estimation
+        
+        #Params
+        dt           = 0.02
+        a            = 0.02
+        b            = ( 1 - a)
+        
+        # New measurement
+        new_point    = ( self.da - self.da_last + 0.0 ) / dt
+        
+        #Filter
+        self.dda     = a * new_point + b * self.dda_state
+        
+        # Memory
+        self.dda_state = self.dda
+        self.da_last   = self.da
+        
+        
+        
         self.callback( None )
         
-    
-    #######################################   
-    def update_state( self, msg ):
-        """ state feedback """
-        
-        
-        self.x = msg.data
-        
-        self.a  = self.x[2]
-        self.da = self.x[5]
-        
-        #self.callback( None )
-        
-
-            
 
 
 #########################################
