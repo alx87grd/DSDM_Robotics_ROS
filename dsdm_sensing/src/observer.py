@@ -90,7 +90,8 @@ class DSDM_OBS(object):
             
             
         
-            
+            # if that code raises an error, go here
+            # (this part is just regular code)
     ###########################################
     def load_params(self, event):
         """ Load param on ROS server """
@@ -119,8 +120,19 @@ class DSDM_OBS(object):
         """ """
             
         # Just pure kinematic for boeing Arm
-        self.q     = self.R.a2q(   self.a  + self.a_zero )
-        self.dq    = self.R.da2dq( self.da , self.q )
+            
+        # Avoid interpolation error blocking the feedback loop code
+        try:
+            self.q     = self.R.a2q(   self.a  + self.a_zero )
+            self.dq    = self.R.da2dq( self.da , self.q )
+        except:
+            print ' Kinematic of 4-bar mechanism outside of interpol range'
+            self.q     = np.zeros( self.R.dof ) 
+            self.dq    = np.zeros( self.R.dof ) 
+        else:
+            pass
+        
+        
         self.x_hat = self.R.q2x( self.q , self.dq   )  
 
         if self.plot_partial_config :
