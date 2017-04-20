@@ -123,6 +123,7 @@ class DSDM_OBS(object):
             self.q     = self.R.a2q(   self.a  + self.a_zero )
             self.dq    = self.R.da2dq( self.da , self.q )
         except:
+            
             print('Kinematic of 4-bar mechanism outside of interpol range')
             self.q     = np.zeros( self.R.dof ) 
             self.dq    = np.zeros( self.R.dof ) 

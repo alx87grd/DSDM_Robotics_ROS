@@ -61,7 +61,7 @@ class planner(object):
         n_pts = self.RRT.solution[0][0].size
         
         # For all times
-        for i in xrange( n_pts ):
+        for i in range( n_pts ):
             
             traj_pt = JointTrajectoryPoint()
             
@@ -70,13 +70,13 @@ class planner(object):
             traj_pt.time_from_start.nsecs = ( t - int(t) ) * 1000
             
             # For all DOF
-            for j in xrange( self.n_DOF ):
+            for j in range( self.n_DOF ):
                 traj_pt.positions.append(     self.RRT.solution[0][j][i] )
                 traj_pt.velocities.append(    self.RRT.solution[0][j+self.n_DOF][i] )
                 traj_pt.accelerations.append( self.RRT.solution[3][j+self.n_DOF][i] )
                 
             # For all actuators
-            for j in xrange( self.RRT.DS.m ):
+            for j in range( self.RRT.DS.m ):
                 traj_pt.effort.append(  self.RRT.solution[1][j][i] )
                 
             traj_msg.points.append( traj_pt )

@@ -8,6 +8,9 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+#  dsdm_msgs
+#  sensor_msgs
+#  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -65,10 +68,12 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+#generate_messages(
+#  DEPENDENCIES
+#  std_msgs
+#  dsdm_msgs
+#  sensor_msgs
+#)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -129,20 +134,30 @@ include_directories(
 
 ## Declare a C++ executable
 # add_executable(dsdm_control_node src/dsdm_control_node.cpp)
-add_executable(dispatcher src/dispatcher.cpp)
+#add_executable(dispatcher src/dispatcher.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(dsdm_control_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_dependencies(dispatcher dsdm_msgs_generate_messages_cpp)
+#add_dependencies(dispatcher dsdm_msgs_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(dsdm_control_node
 #   ${catkin_LIBRARIES}
 # )
 
-target_link_libraries(dispatcher ${catkin_LIBRARIES})
+#target_link_libraries(dispatcher ${catkin_LIBRARIES})
+
+
+
+##################################################
+##  ADD back this for generating the dispatcher
+################################################
+
+#add_executable(dispatcher src/dispatcher.cpp)
+#add_dependencies(dispatcher dsdm_msgs_generate_messages_cpp)
+#target_link_libraries(dispatcher ${catkin_LIBRARIES})
 
 #############
 ## Install ##

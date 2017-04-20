@@ -109,11 +109,11 @@ class dsdm_pid(object):
                     self.k = 0
                 """
                 
-                #print self.dda
+                #print(self.dda)
                 
                 if (self.dda > 15 ):
                     self.impact = True
-                    print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+                    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                     
                 if self.impact:
                     self.k = 1
@@ -268,7 +268,7 @@ class dsdm_pid(object):
         # Reset Integral Error if mode changed
         if not( self.last_mode == self.mode ):
             
-            print 'Control Mode Updated to: ' + self.mode
+            print('Control Mode Updated to: ' + self.mode)
             self.e_sum = 0
             
         self.last_mode = self.mode
