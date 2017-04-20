@@ -60,7 +60,7 @@ class DSDM_OBS(object):
             self.plot_partial_config = True
         
         else:
-            print 'Error loading robot type'
+            print('Error loading robot type')
             self.plot_partial_config = False
 
         # Variable Init
@@ -126,7 +126,7 @@ class DSDM_OBS(object):
             self.q     = self.R.a2q(   self.a  + self.a_zero )
             self.dq    = self.R.da2dq( self.da , self.q )
         except:
-            print ' Kinematic of 4-bar mechanism outside of interpol range'
+            print(' Kinematic of 4-bar mechanism outside of interpol range')
             self.q     = np.zeros( self.R.dof ) 
             self.dq    = np.zeros( self.R.dof ) 
         else:

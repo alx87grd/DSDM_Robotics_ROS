@@ -343,7 +343,7 @@ class Robot_controller(object):
             # Debug
             if self.debug :
                 
-                print self.Ctl.q_e , q , u
+                print(self.Ctl.q_e , q , u)
                 self.setpoint  = self.x_d[ self.debug_i * 2 ]
                 self.actual    = q[ self.debug_i ]
                 #self.actual    = q
@@ -353,14 +353,14 @@ class Robot_controller(object):
         # Custom 2
         elif ( self.mode == 5 ):
             
-            print x
+            print(x)
 
             
         #######################################
         # Custom 3
         elif ( self.mode == 6 ):
             
-            print self.x_d
+            print(self.x_d)
         
         
         #######################################

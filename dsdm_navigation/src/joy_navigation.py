@@ -75,7 +75,7 @@ class nav(object):
         msg.header.stamp = rospy.Time.now() # mark time
         msg.n = self.n_DOF 
         
-        for i in xrange( msg.n ):
+        for i in range( msg.n ):
             msg.q.append( q_goal[i] )
             
         self.pub_q_goal.publish( msg )

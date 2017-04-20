@@ -61,7 +61,7 @@ class CTC_controller(object):
         # READ THE MESSAGE
         
         #For all pts
-        for i in xrange(n):
+        for i in range(n):
             
             # Time vector
             secs    = msg.points[i].time_from_start.secs
@@ -69,7 +69,7 @@ class CTC_controller(object):
             t[i]    = secs + nsecs * 0.001
             
             # For all DOF
-            for j in xrange( self.n_DOF ):
+            for j in range( self.n_DOF ):
                 q[j,i]    = msg.points[i].positions[j]
                 dq[j,i]   = msg.points[i].velocities[j]
                 ddq[j,i]  = msg.points[i].accelerations[j]
@@ -116,7 +116,7 @@ class CTC_controller(object):
         # Testing
         msg.k = np.random.randint(0,5)
         
-        for i in xrange( msg.m ):
+        for i in range( msg.m ):
             msg.F.append( u[i] )
         
         self.pub_control.publish( msg )
