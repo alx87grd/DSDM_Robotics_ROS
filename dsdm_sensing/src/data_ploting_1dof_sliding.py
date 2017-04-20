@@ -4,6 +4,10 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype']  = 42
+
+
 
 # Embed font type in PDF
 matplotlib.rcParams['pdf.fonttype'] = 42
@@ -13,13 +17,15 @@ matplotlib.rcParams['ps.fonttype']  = 42
 
 
 ## LOADING
-path      = '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_sensing/data/' 
+path      = '../data/'
+#path      = '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_sensing/data/' 
 
-r = 1
+r = 4
 
 if r == 1 :
 
     name      = '1dof_unloaded_D1'
+    output    = 'r1'
     
     i = 1 + 500 * 6.40
     j = i + 500 * 4.8
@@ -29,6 +35,7 @@ if r == 1 :
 elif r == 2:
     
     name      = '1dof_loaded_D1'
+    output    = 'r2'
     i = 1 + 500 * 3.95
     j = i + 500 * 4.8
     
@@ -37,6 +44,7 @@ elif r == 2:
 elif r == 3:
     
     name      = '1dof_unloaded_D15'
+    output    = 'r3'
 
     i = 1 + 500 * 14.95
     j = i + 500 * 4.8
@@ -46,6 +54,7 @@ elif r == 3:
 elif r == 4:
     
     name      = '1dof_loaded_D15'
+    output    = 'r4'
 
     i = 1 + 500 * 4.2
     j = i + 500 * 4.8
@@ -81,7 +90,7 @@ save = True
 
 def plot_main( ylabel = True ):
 
-    fontsize = 5
+    fontsize = 7
     
     matplotlib.rc('xtick', labelsize=fontsize )
     matplotlib.rc('ytick', labelsize=fontsize )
@@ -89,29 +98,28 @@ def plot_main( ylabel = True ):
     if ylabel:
         w = 1.5
     else:
-        w = 1.35
+        w = 1.0
     
-    simfig , plot = plt.subplots(4, sharex=True,figsize=( w , 3),dpi=600, frameon=True)
+    simfig , plot = plt.subplots(4, sharex=True,figsize=( w , 4), dpi=400, frameon=True)
     
     simfig.canvas.set_window_title('Closed loop trajectory')
     
     plot[0].plot( t ,  qd , 'r--', label = 'Ref. trajectory')
     plot[0].plot( t ,  q , 'b' ,  label = 'Actual position')
     plot[0].set_yticks([-3.14,0])
-    plot[0].set_ylim(-5,1)
+    plot[0].set_ylim(-3.5,0.5)
     plot[0].grid(True)
-    plot[0].set_ylim(-6,1)
     #legend = plot[0].legend(loc='lower right', fancybox=True, shadow=False, prop={'size':fontsize})
     #legend.get_frame().set_alpha(0.4)
     
     plot[1].plot( t ,  dq , 'b')
-    plot[1].set_yticks([-6,0,6])
-    plot[1].set_ylim(-8,8)
+    plot[1].set_yticks([0,3])
+    plot[1].set_ylim(-1,4)
     plot[1].grid(True)
     
     plot[2].plot( t ,  f , 'b')
-    plot[2].set_yticks([-0.2,0,0.2])
-    plot[2].set_ylim(-0.3,0.3)
+    plot[2].set_yticks([-0.1,0,0.1])
+    plot[2].set_ylim(-0.12,0.12)
     plot[2].grid(True)
     
     plot[3].plot( t ,  k * 451 + 23 , 'r')
@@ -125,6 +133,15 @@ def plot_main( ylabel = True ):
         plot[1].set_ylabel('Speed \n [rad/sec]' , fontsize=fontsize )
         plot[2].set_ylabel('Torque \n [Nm]' , fontsize=fontsize )
         plot[3].set_ylabel('Gear Ratio' , fontsize=fontsize )
+        
+    else:
+        pass
+        #plot[0].set_yticks([])
+        #plot[1].set_yticks([])
+        #plot[2].set_yticks([])
+        #plot[3].set_yticks([])
+        
+        
     
     plot[-1].set_xlabel('Time [sec]', fontsize=fontsize )
     plot[-1].set_xlim(0,5)
@@ -135,10 +152,16 @@ def plot_main( ylabel = True ):
 
     simfig.tight_layout()
     
+    if ylabel:
+        plt.subplots_adjust(left=0.42, right=0.98, top=0.99, bottom=0.15)
+        
+    else:
+        plt.subplots_adjust(left=0.02, right=0.98, top=0.99, bottom=0.15)
+    
     simfig.show()
     
-    simfig.savefig( path + name + '.pdf' )
-    simfig.savefig( path + name + '.png' )
+    simfig.savefig( path + output + '.pdf' )
+    simfig.savefig( path + output + '.png' )
     
 
 def plot_motors():
