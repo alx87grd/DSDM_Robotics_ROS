@@ -11,6 +11,7 @@ from dsdm_msgs.msg import dsdm_actuator_sensor_feedback
 from std_msgs.msg  import Float64MultiArray
 
 from AlexRobotics.dynamic  import CustomManipulator    as CM
+from AlexRobotics.dynamic  import Prototypes           as Proto
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -41,21 +42,26 @@ class DSDM_OBS(object):
         self.sub_a1         = rospy.Subscriber("a1/y", dsdm_actuator_sensor_feedback , self.feedback_callback_a1 , queue_size=1 )
         self.sub_a2         = rospy.Subscriber("a2/y", dsdm_actuator_sensor_feedback , self.feedback_callback_a2 , queue_size=1 )
         
-        # Timer
-        #self.timer          = rospy.Timer( rospy.Duration.from_sec(0.2),    self.timer_callback  )
+        # Param Timer
+        self.timer          = rospy.Timer( rospy.Duration.from_sec(2.0),    self.load_params  )
         
         # Load params
         self.load_params( None )
         
         # Load robot params
         if self.robot_type == 'BoeingArm':
-            self.R       = CM.BoeingArm()
+            self.R                   = CM.BoeingArm()
+            self.plot_partial_config = True
             
         elif self.robot_type == 'pendulum':
-            self.R       = CM.TestPendulum()
+            #self.R                   = CM.TestPendulum()
+            #self.plot_partial_config = False
+            self.R                   = CM.TestPendulum()
+            self.plot_partial_config = True
         
         else:
             print 'Error loading robot type'
+            self.plot_partial_config = False
 
         # Variable Init
         self.a      = np.zeros( self.R.dof )       
@@ -67,11 +73,31 @@ class DSDM_OBS(object):
         if self.plot:
             self.R.show_3D( self.q )
             
+            
+        # Partial Manipulator
+        
+        if self.plot_partial_config :
+            
+            if self.robot_config == 'wrist-only':
+                self.Rp = Proto.SingleRevoluteDSDM()
+                self.qp = np.array( [ 0 ] )
+                
+            elif self.robot_config == 'dual-plane' :
+                self.Rp = Proto.TwoPlanarSerialDSDM()
+                self.qp = np.array( [ 0 , 0 ] )
+                
+            self.Rp.show( self.qp )
+            
+            
+        
+            # if that code raises an error, go here
+            # (this part is just regular code)
     ###########################################
     def load_params(self, event):
         """ Load param on ROS server """
         
         self.robot_type     = rospy.get_param("robot_type",  'BoeingArm'  )
+        self.robot_config   = rospy.get_param("robot_config",  'wrist-only'  )
         a0_zero             = rospy.get_param("a0_zero",  0.05 )
         a1_zero             = rospy.get_param("a1_zero",  0.00 )
         a2_zero             = rospy.get_param("a2_zero",  0.00 )
@@ -92,11 +118,31 @@ class DSDM_OBS(object):
     ###################################
     def estimate_state(self ):
         """ """
-        
+            
         # Just pure kinematic for boeing Arm
-        self.q     = self.R.a2q(   self.a  + self.a_zero      )
-        self.dq    = self.R.da2dq( self.da , self.q )
+            
+        # Avoid interpolation error blocking the feedback loop code
+        try:
+            self.q     = self.R.a2q(   self.a  + self.a_zero )
+            self.dq    = self.R.da2dq( self.da , self.q )
+        except:
+            print ' Kinematic of 4-bar mechanism outside of interpol range'
+            self.q     = np.zeros( self.R.dof ) 
+            self.dq    = np.zeros( self.R.dof ) 
+        else:
+            pass
+        
+        
         self.x_hat = self.R.q2x( self.q , self.dq   )  
+
+        if self.plot_partial_config :
+            
+            if self.robot_config == 'wrist-only':
+                self.qp = np.array( [ self.q[2] ] )
+                
+            elif self.robot_config == 'dual-plane' :
+                self.qp = np.array( [ self.q[1] , self.q[2]  ] )
+            
         
         
     ###################################
@@ -106,6 +152,10 @@ class DSDM_OBS(object):
         # Update graphic
         if self.plot:
             self.R.update_show_3D( self.q )
+            
+            if self.plot_partial_config :
+                self.Rp.update_show( self.qp  )
+
     
     #######################################   
     def pub_state_estimate( self ):
@@ -141,6 +191,12 @@ class DSDM_OBS(object):
         
         self.a[2]  = msg.a
         self.da[2] = msg.da
+        
+        # Evante based timing
+        if self.robot_type == 'pendulum':
+            self.main_callback()
+        
+        
         
         
         

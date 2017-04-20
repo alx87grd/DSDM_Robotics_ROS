@@ -40,20 +40,22 @@ class DSDM_CTL(object):
 
         ##########################
         # Variables initialization
-        self.INIT        = True
-        self.sync_err_i  = 0
+        self.INIT          = True
+        self.sync_err_i    = 0
 
         # Set point
         self.f = 0
         self.k = 1
+        self.n = 0
         
         # Feedback from sensors
-        self.y_raw = np.zeros(3)  # M1 = [1], M2 = [1]
-        self.w_raw = np.zeros(3)  # Velocity
-        self.y     = np.zeros(3)  # M1 = [1], M2 = [1]
-        self.w     = np.zeros(3)  # Velocity
-        self.a     = 0
-        self.da    = 0
+        self.y_raw  = np.zeros(3)  # M1 = [1], M2 = [1]
+        self.w_raw  = np.zeros(3)  # Velocity
+        self.y      = np.zeros(3)  # M1 = [1], M2 = [1]
+        self.w      = np.zeros(3)  # Velocity
+        self.a      = 0
+        self.da     = 0
+        self.k_real = 1
         
         # Memory for speed filter
         self.y_past = np.zeros(3)  # t-1 value
@@ -85,6 +87,7 @@ class DSDM_CTL(object):
         """ Load param on ROS server """
         
         self.filter_rc       = rospy.get_param("filter_rc",        0.05  )
+        self.filter_active   = rospy.get_param("filter_active",    True  )
         tpt                  = rospy.get_param("ticks_per_turns",   2000 )
         out_corr             = rospy.get_param("output_units_corr",    1 )
         r1                   = rospy.get_param("r1",                   1 )
@@ -118,11 +121,13 @@ class DSDM_CTL(object):
         self.ctrl_gains      = [kp,ki,kd,0,0,0]
         
         # sync controller
-        self.g_sync_kp   = rospy.get_param("g_sync_kp",       1 )
-        self.g_sync_ki   = rospy.get_param("g_sync_ki",       0 )
-        self.g_1         = rospy.get_param("g_1",            -1 )
-        self.g_2         = rospy.get_param("g_2",            20 )
-        self.w_eps       = rospy.get_param("w_eps",          10 )
+        self.g_sync_kp    = rospy.get_param("g_sync_kp",       1 )
+        self.g_sync_kp_HS = rospy.get_param("g_sync_kp_HS",    1 )
+        self.g_sync_ki    = rospy.get_param("g_sync_ki",       0 )
+        self.g_sync_ki_HS = rospy.get_param("g_sync_ki_HS",    0 )
+        self.g_1          = rospy.get_param("g_1",            -1 )
+        self.g_2          = rospy.get_param("g_2",            20 )
+        self.w_eps        = rospy.get_param("w_eps",          10 )
         
         # Max current
         self.max_current = np.array([ m1_max_current , m2_max_current ])
@@ -143,7 +148,7 @@ class DSDM_CTL(object):
             self.setpoints        = [ self.f2setpoint( self.f , 1 ) , 0  ] # Direct force feedtrough in M1
             
             # Nullspace Loop
-            self.delta_setpoints  = np.array([ self.g_1 , self.g_2 ]) * ( self.g_sync_kp *  self.w[1] ) # Minimize M1 speed
+            self.delta_setpoints  = np.array([ self.g_1 , self.g_2 ]) * ( self.g_sync_kp_HS * (  self.w[1] - self.n * 1000 ) + self.g_sync_ki_HS * self.sync_err_i ) # Minimize M1 speed
             
             # Fusion of controllers
             self.setpoints        = self.setpoints + self.delta_setpoints.astype( int )
@@ -154,7 +159,13 @@ class DSDM_CTL(object):
             self.brake_open()
             
             # Reset sync ctl
-            self.sync_err_i       = 0 # intergral effect
+            if (self.g_sync_ki_HS == 0):
+                self.sync_err_i       = 0 # intergral effect reset
+            else:
+                self.sync_err_i       = self.sync_err_i + (  self.w[1] - self.n * 1000 ) # intergral effect
+            
+            # Feedback data
+            self.k_real           = 0 # High speed mode
             
             
             
@@ -182,6 +193,9 @@ class DSDM_CTL(object):
                 # Reset syn ctl
                 self.sync_err_i       = 0 # intergral effect
                 
+                # Feedback data
+                self.k_real           = 1 # High Force mode
+                
                 
             else:
                 
@@ -203,6 +217,9 @@ class DSDM_CTL(object):
                 self.ctrl_modes       = [      self.ctl_mode                  , self.ctl_mode  ] 
                 #self.brake_state      = 255 # Brake open
                 self.brake_open()
+                
+                # Feedback data
+                self.k_real           = 0 # High speed mode
                 
         
         # Satuation
@@ -278,6 +295,7 @@ class DSDM_CTL(object):
         """ Record new setpoint """
         self.f = msg.f  # effort
         self.k = msg.k  # mode
+        self.n = msg.n  # nullspace setpoint
         
         
     ############################################
@@ -326,7 +344,11 @@ class DSDM_CTL(object):
         # Compute filtered speed with raw large values
         self.w_raw       = self.y_raw - self.y_past                      # ticks per period
         w                = ( self.w_raw + 0.0 ) / dt                         # ticks per seconds
-        w_filtered_ticks = self.alpha * w + ( 1 - self.alpha ) * self.w_x    # filter
+        
+        if self.filter_active:
+            w_filtered_ticks = self.alpha * w + ( 1 - self.alpha ) * self.w_x    # filter
+        else:
+            w_filtered_ticks = w
         
         ################
         # Kinematic
@@ -395,16 +417,17 @@ class DSDM_CTL(object):
         msg_y.header.frame_id  = msg.header.frame_id
         
         # Feedback info
-        msg_y.theta = self.y
-        msg_y.w     = self.w
-        msg_y.y_raw = self.y_raw
-        msg_y.w_raw = self.w_raw
-        msg_y.da    = self.da
-        msg_y.a     = self.a
-        msg_y.w1    = self.w[1]
-        msg_y.w2    = self.w[2]
-        msg_y.id1   = self.setpoints[0]
-        msg_y.id2   = self.setpoints[1]
+        msg_y.theta  = self.y
+        msg_y.w      = self.w
+        msg_y.y_raw  = self.y_raw
+        msg_y.w_raw  = self.w_raw
+        msg_y.da     = self.da
+        msg_y.a      = self.a
+        msg_y.w1     = self.w[1]
+        msg_y.w2     = self.w[2]
+        msg_y.id1    = self.setpoints[0]
+        msg_y.id2    = self.setpoints[1]
+        msg_y.k_real = self.k_real
         
         self.pub_y.publish( msg_y )
         

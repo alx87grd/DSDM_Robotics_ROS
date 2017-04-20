@@ -1,30 +1,8 @@
 # Parameters for DSDM actuator controller node
 
-# Dynamics
-filter_rc:            0.05       # time constant for the filtered differentiation of position values [sec]
 
+robot_type:     'BoeingArm'       # 
+a0_zero:         0.05             # zero value of actuator 0
+a1_zero:         0.0              # zero value of actuator 1
+a2_zero:         0.0              # zero value of actuator 2
 
-# Units
-ticks_per_turns:   2000       # Encoder params
-
-
-# Revolute output
-# output_units     :   '[rad]'  #
-# output_units_corr:    1       # Value correcting for output units that are not radian
-
-# Linear output
-# Output units = meter + set rout to lead [mm/rev]
-output_units     :   '[meter]'          #
-output_units_corr:    0.0001591549      # from rad to meter : 1/ 2 * pi / 1000
-
-# Gear ratios
-r1:                   4       # gear ratio motor 1
-r2:                  72       # gear ratio motor 2
-rout:                20       # output reduction 
-
-
-# Signs
-out_sign:   -1 
-m1_sign:    -1
-m2_sign:     1
- 

@@ -10,4 +10,5 @@ float32   w1        # motor 1 velocity [rad/sec or meter/sec]
 float32   w2        # motor 2 velocity [rad/sec or meter/sec]
 float32   id1       # motor 1 desired current [mA]
 float32   id2       # motor 2 desired current [mA]
+int8      k_real    # index of gear ratio currently selected
 
