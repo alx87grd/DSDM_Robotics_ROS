@@ -55,4 +55,4 @@ g_sync_kp_HS :    0    # overall gain HS
 g_sync_ki_HS :    0    # overall gain HS
 g_1          :   -1    # motor 1 component
 g_2          :   -20    # motor 2 component
-w_eps        :   20    # allowable velocity before engaging the brake [rad/sec]
+w_eps        :    10    # allowable velocity before engaging the brake [rad/sec]
