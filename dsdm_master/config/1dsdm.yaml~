@@ -3,6 +3,7 @@
 
 robot_type:     'BoeingArm'       # 
 <<<<<<< HEAD
+<<<<<<< HEAD
 robot_config:   'wrist-only'      #  'wrist-only' or 'dual-plane'
 a0_zero:         0.05             # zero value of actuator 0
 a1_zero:         0.0              # zero value of actuator 1
@@ -15,4 +16,10 @@ a0_zero:         0.05             # zero value of actuator 0
 a1_zero:         0.0              # zero value of actuator 1
 a2_zero:         0.0              # zero value of actuator 2
 >>>>>>> full-robot-dev
+=======
+robot_config:   'wrist-only'      #  'wrist-only' or 'dual-plane'
+a0_zero:         0.05             # zero value of actuator 0
+a1_zero:         0.0              # zero value of actuator 1
+a2_zero:         -3.14            # zero value of actuator 2
+>>>>>>> RAL-nov16-experiments-backup
 

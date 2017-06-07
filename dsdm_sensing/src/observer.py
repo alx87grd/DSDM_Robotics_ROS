@@ -60,7 +60,7 @@ class DSDM_OBS(object):
             self.plot_partial_config = True
         
         else:
-            print 'Error loading robot type'
+            print('Error loading robot type')
             self.plot_partial_config = False
 
         # Variable Init
@@ -75,7 +75,6 @@ class DSDM_OBS(object):
             
             
         # Partial Manipulator
-        
         if self.plot_partial_config :
             
             if self.robot_config == 'wrist-only':
@@ -88,10 +87,8 @@ class DSDM_OBS(object):
                 
             self.Rp.show( self.qp )
             
-            
         
-            # if that code raises an error, go here
-            # (this part is just regular code)
+            
     ###########################################
     def load_params(self, event):
         """ Load param on ROS server """
@@ -126,7 +123,8 @@ class DSDM_OBS(object):
             self.q     = self.R.a2q(   self.a  + self.a_zero )
             self.dq    = self.R.da2dq( self.da , self.q )
         except:
-            print ' Kinematic of 4-bar mechanism outside of interpol range'
+            
+            print('Kinematic of 4-bar mechanism outside of interpol range')
             self.q     = np.zeros( self.R.dof ) 
             self.dq    = np.zeros( self.R.dof ) 
         else:
@@ -143,6 +141,7 @@ class DSDM_OBS(object):
             elif self.robot_config == 'dual-plane' :
                 self.qp = np.array( [ self.q[1] , self.q[2]  ] )
             
+            
         
         
     ###################################
@@ -155,7 +154,7 @@ class DSDM_OBS(object):
             
             if self.plot_partial_config :
                 self.Rp.update_show( self.qp  )
-
+        
     
     #######################################   
     def pub_state_estimate( self ):
@@ -195,9 +194,6 @@ class DSDM_OBS(object):
         # Evante based timing
         if self.robot_type == 'pendulum':
             self.main_callback()
-        
-        
-        
         
         
 #########################################

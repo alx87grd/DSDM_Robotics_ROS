@@ -55,7 +55,7 @@ class CTC_controller(object):
             self.RRT.load_solution( '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_control/data/pendulum_traj_test0.npy'  )
         
         else:
-            print 'Error loading robot type'
+            print('Error loading robot type')
         
         # Load params
         self.CTC.w0            = 8.0
@@ -190,7 +190,7 @@ class CTC_controller(object):
         
         ##################
         if self.verbose:
-            print u
+            print(u)
             #rospy.loginfo("Controller: e = " + str(self.CTC.q_e) + "de = " + str(self.CTC.dq_e) + "ddr =" + str(self.CTC.ddq_r) + " U = " + str(u) )
         
         #xt  = np.append( x  , t )

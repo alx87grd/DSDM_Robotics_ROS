@@ -81,6 +81,7 @@ class Robot_controller(object):
         self.fixed_mode     = rospy.get_param("fixed_mode",  1               )
         
         
+        
         ###############################################
         # Load robot model for the right configuration
         if self.robot_config == 'wrist-only':
@@ -188,6 +189,7 @@ class Robot_controller(object):
         ############################################
         # update setpoints for the possible modes
                 
+
         """ Open Loop Setpoints """
         
         """ Ball screw DoF """
@@ -209,6 +211,7 @@ class Robot_controller(object):
         self.fd[2] = self.joy.axes[4] * 0.2
         self.kd[2] = not( self.joy.buttons[1] )
         self.nd[2] = self.joy.axes[3] * 0.5
+
         
         ###################
         
@@ -280,6 +283,7 @@ class Robot_controller(object):
             if self.debug :
                 self.setpoint  = self.f[ self.debug_i ]
                 
+
         #######################################
         # Closed Loop Acc
         elif ( self.mode == 1 ):
@@ -305,6 +309,7 @@ class Robot_controller(object):
             
             self.u2fkn( u ) # convert to actuator cmds
 
+
             # Debug
             if self.debug :
                 self.setpoint  = self.dq_d[ self.debug_i ]
@@ -316,6 +321,7 @@ class Robot_controller(object):
         # Closed Loop Position
         elif ( self.mode == 3 ):
             
+
             self.Ctl.goal = self.R.q2x( self.q_d , np.zeros( self.R.dof ) )
             
             u = self.Ctl.fixed_goal_ctl( x  , t )
@@ -343,7 +349,7 @@ class Robot_controller(object):
             # Debug
             if self.debug :
                 
-                print self.Ctl.q_e , q , u
+                print(self.Ctl.q_e , q , u)
                 self.setpoint  = self.x_d[ self.debug_i * 2 ]
                 self.actual    = q[ self.debug_i ]
                 #self.actual    = q
@@ -353,14 +359,14 @@ class Robot_controller(object):
         # Custom 2
         elif ( self.mode == 5 ):
             
-            print x
+            print(x)
 
             
         #######################################
         # Custom 3
         elif ( self.mode == 6 ):
             
-            print self.x_d
+            print(self.x_d)
         
         
         #######################################
@@ -387,6 +393,7 @@ class Robot_controller(object):
     def u2fkn( self , u ):
         """ Convert input array into individual actuator commands """
         
+
         self.f = np.array([0.,0.,0.])
         self.k = np.array([1 ,1 ,1 ]) # High force mode
         self.n = np.array([0.,0.,0.])
@@ -431,8 +438,6 @@ class Robot_controller(object):
             else:
                 self.k[1] = 1
                 self.k[2] = 1
-            
-       
         
         
     #######################################   
@@ -441,6 +446,7 @@ class Robot_controller(object):
         
         msg0 = dsdm_actuator_control_inputs()
         msg1 = dsdm_actuator_control_inputs()
+
         msg2 = dsdm_actuator_control_inputs()
         
         # Load data only if enabled
@@ -475,6 +481,7 @@ class Robot_controller(object):
         self.pub_a1u.publish( msg1 )
         self.pub_a2u.publish( msg2 )
         
+
     #######################################   
     def pub_e_msg( self ):
         """ Publish error data """
@@ -488,7 +495,6 @@ class Robot_controller(object):
         msg.cmd          = self.cmd + 0.0
         
         self.pub_e.publish( msg )
-
 
 
 #########################################

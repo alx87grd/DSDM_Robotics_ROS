@@ -1,8 +1,6 @@
 <launch>
-
-	<rosparam command="load" file="$(find dsdm_master)/config/1dsdm.yaml"/>
 	<rosparam command="load" file="$(find dsdm_control)/config/1dsdm.yaml"/>
-        
+
 	<node pkg="joy" type="joy_node" name="joy" output="screen">
         </node>
 

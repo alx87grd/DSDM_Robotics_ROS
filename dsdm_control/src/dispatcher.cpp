@@ -1,6 +1,6 @@
 #include "ros/ros.h"
-#include "dsdm_msgs/dsdm_robot_control_inputs.h"
 #include "dsdm_msgs/dsdm_actuator_control_inputs.h"
+#include "dsdm_msgs/dsdm_robot_control_inputs.h"
 
 //  Dispatcher clas -----------------------------
 class Dispatcher_Node{

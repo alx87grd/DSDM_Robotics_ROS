@@ -11,14 +11,12 @@ import matplotlib.pyplot as plt
 ## LOADING
 
 
-name      = '1dof_loaded_D15'
+#name      = '1dof_loaded_D15'
 
 name      = '/home/alex/ROS_WS/src/dsdm_robotics/dsdm_sensing/data/' + name + '.npy'
 
 DATA = np.load( name )
 
-i = 1 + 500 * 4
-j = 1 + 500 * 9
 i = 1 + 500 * 1.470
 j = i + 500 * 4
 
@@ -84,17 +82,8 @@ def plot_main():
     plot[3].set_ylabel('Gear Ratio' , fontsize=fontsize )
     
     plot[-1].set_xlabel('Time [sec]', fontsize=fontsize )
-<<<<<<< HEAD
-    #plot[-1].set_xlim(0,4)
-    
-    #plot[-1].set_xticks([0.65,1.16,1.39,2.63])
-    #plot[-1].set_xticks([0,1,2,3,4])
-=======
     plot[-1].set_xlim(0,4)
-    
-    #plot[-1].set_xticks([0.65,1.16,1.39,2.63])
     plot[-1].set_xticks([0,1,2,3,4])
->>>>>>> full-robot-dev
 
     simfig.tight_layout()
     
